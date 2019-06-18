@@ -25,7 +25,9 @@ AKhopeshCharacter::AKhopeshCharacter()
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->TargetArmLength = 300.0f;
+	CameraBoom->TargetArmLength = 450.0f;
+	CameraBoom->SocketOffset = FVector(0.0f, 0.0f, 88.0f);
+	CameraBoom->bEnableCameraLag = true;
 	CameraBoom->bUsePawnControlRotation = true;
 
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
@@ -42,6 +44,16 @@ AKhopeshCharacter::AKhopeshCharacter()
 	}
 
 	GetMesh()->SetWorldLocationAndRotation(FVector(0.0f, 0.0f, -97.0f), FRotator(0.0f, 270.0f, 0.0f).Quaternion());
+	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+
+	static ConstructorHelpers::FClassFinder<UAnimInstance> Anim(
+		TEXT("AnimBlueprint'/Game/Blueprint/BP_KhopeshAnimBlueprint.BP_KhopeshAnimBlueprint_C'")
+	);
+	
+	if (Anim.Succeeded())
+	{
+		GetMesh()->AnimClass = Anim.Class;
+	}
 }
 
 void AKhopeshCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
