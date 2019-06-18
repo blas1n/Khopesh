@@ -59,7 +59,7 @@ void AKhopeshCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerI
 
 void AKhopeshCharacter::MoveForward(float Value)
 {
-	if ((Controller != nullptr) && (Value != 0.0f))
+	if ((Controller != nullptr) && (!FMath::IsNearlyEqual(Value, 0.0f, 0.1f)))
 	{
 		Move(EAxis::X, Value);
 	}
@@ -67,7 +67,7 @@ void AKhopeshCharacter::MoveForward(float Value)
 
 void AKhopeshCharacter::MoveRight(float Value)
 {
-	if ((Controller != nullptr) && (Value != 0.0f))
+	if ((Controller != nullptr) && (!FMath::IsNearlyEqual(Value, 0.0f, 0.1f)))
 	{
 		Move(EAxis::Y, Value);
 	}
