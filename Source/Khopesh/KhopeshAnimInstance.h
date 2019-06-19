@@ -16,10 +16,17 @@ public:
 
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
+	void EnableFightMode();
+
+	void PlayMontage(UAnimMontage* Montage);
+
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
 	float Speed;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
 	bool IsInAir;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
+	bool IsFightMode;
 };

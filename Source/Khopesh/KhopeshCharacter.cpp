@@ -9,6 +9,8 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "ConstructorHelpers.h"
+#include "KhopeshAnimInstance.h"
+#include "Animation/AnimMontage.h"
 
 AKhopeshCharacter::AKhopeshCharacter()
 {
@@ -20,9 +22,10 @@ AKhopeshCharacter::AKhopeshCharacter()
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
+	GetCharacterMovement()->MaxWalkSpeed = 800.0f;
 	GetCharacterMovement()->JumpZVelocity = 600.f;
 	GetCharacterMovement()->AirControl = 0.2f;
-
+	
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 450.0f;
@@ -34,26 +37,22 @@ AKhopeshCharacter::AKhopeshCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
 
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> Skin(
-		TEXT("SkeletalMesh'/Game/ParagonGideon/Characters/Heroes/Gideon/Meshes/Gideon.Gideon'")
-	);
+	Speed = RightSpeed = 0.33f;
+	bFightMode = true;
+}
 
-	if (Skin.Succeeded())
-	{
-		GetMesh()->SetSkeletalMesh(Skin.Object);
-	}
+void AKhopeshCharacter::BeginPlay()
+{
+	Super::BeginPlay();
 
-	GetMesh()->SetWorldLocationAndRotation(FVector(0.0f, 0.0f, -97.0f), FRotator(0.0f, 270.0f, 0.0f).Quaternion());
-	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+	AnimInstance = Cast<UKhopeshAnimInstance>(GetMesh()->GetAnimInstance());
+}
 
-	static ConstructorHelpers::FClassFinder<UAnimInstance> Anim(
-		TEXT("AnimBlueprint'/Game/Blueprint/BP_KhopeshAnimBlueprint.BP_KhopeshAnimBlueprint_C'")
-	);
-	
-	if (Anim.Succeeded())
-	{
-		GetMesh()->AnimClass = Anim.Class;
-	}
+void AKhopeshCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	Speed = FMath::Lerp(Speed, RightSpeed, DeltaSeconds * 10.0f);
 }
 
 void AKhopeshCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -67,13 +66,16 @@ void AKhopeshCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerI
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 
 	PlayerInputComponent->BindAction("Step", IE_Pressed, this, &AKhopeshCharacter::Step);
+
+	PlayerInputComponent->BindAction("Dash", IE_Pressed, this, &AKhopeshCharacter::RunMode);
+	PlayerInputComponent->BindAction("Dash", IE_Released, this, &AKhopeshCharacter::WalkMode);
 }
 
 void AKhopeshCharacter::MoveForward(float Value)
 {
 	if ((Controller != nullptr) && (!FMath::IsNearlyEqual(Value, 0.0f, 0.1f)))
 	{
-		Move(EAxis::X, Value);
+		Move(EAxis::X, Value * Speed);
 	}
 }
 
@@ -81,16 +83,16 @@ void AKhopeshCharacter::MoveRight(float Value)
 {
 	if ((Controller != nullptr) && (!FMath::IsNearlyEqual(Value, 0.0f, 0.1f)))
 	{
-		Move(EAxis::Y, Value);
+		Move(EAxis::Y, Value * Speed);
 	}
 }
 
 void AKhopeshCharacter::Step()
 {
-	float Vertical = GetInputAxisValue("MoveForward");
-	float Horizontal = GetInputAxisValue("MoveRight");
+	UAnimMontage* Dodge = bFightMode ? DodgeEquip : DodgeUnequip;
 
-	UE_LOG(LogTemp, Warning, TEXT("Step"));
+	if (!AnimInstance->Montage_IsPlaying(Dodge))
+		AnimInstance->PlayMontage(Dodge);
 }
 
 void AKhopeshCharacter::Move(EAxis::Type Axis, float Value)
@@ -100,4 +102,14 @@ void AKhopeshCharacter::Move(EAxis::Type Axis, float Value)
 
 	const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(Axis);
 	AddMovementInput(Direction, Value);
+}
+
+void AKhopeshCharacter::WalkMode()
+{
+	RightSpeed -= 0.33f;
+}
+
+void AKhopeshCharacter::RunMode()
+{
+	RightSpeed += 0.33f;
 }

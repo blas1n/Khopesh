@@ -26,7 +26,9 @@ private:
 	void MoveRight(float Value);
 	void Step();
 
-protected:
+private:
+	virtual void BeginPlay() override;
+	virtual void Tick(float DelatSeconds) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 public:
@@ -35,9 +37,47 @@ public:
 
 private:
 	void Move(EAxis::Type Axis, float Value);
+	void WalkMode();
+	void RunMode();
 
 private:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, Meta = (AllowPrivateAccess = true))
+	class UKhopeshAnimInstance* AnimInstance;
+
 	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Weapon, Meta = (AllowPrivateAccess = true))
 	//class AWeapon* Weapon;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
+	class UAnimMontage* Attack;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
+	class UAnimMontage* DodgeEquip;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
+	class UAnimMontage* DodgeUnequip;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
+	class UAnimMontage* Defense;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
+	class UAnimMontage* HitLight;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
+	class UAnimMontage* HitHeavy;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
+	class UAnimMontage* Broken;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
+	class UAnimMontage* Die;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
+	class UAnimMontage* Equip;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
+	class UAnimMontage* Unequip;
+
+	float Speed, RightSpeed;
+	bool bFightMode;
 };
 

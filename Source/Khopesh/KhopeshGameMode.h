@@ -10,10 +10,4 @@ UCLASS(minimalapi)
 class AKhopeshGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
-
-public:
-	AKhopeshGameMode();
 };
-
-
-
