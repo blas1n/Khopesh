@@ -16,9 +16,9 @@ public:
 
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
-	void EnableFightMode();
+	void SetFightMode(bool IsFight);
 
-	void PlayMontage(UAnimMontage* Montage);
+	void PlayMontageUnique(UAnimMontage* Montage);
 
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))

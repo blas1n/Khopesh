@@ -77,6 +77,9 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
 	class UAnimMontage* Unequip;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Fight, Meta = (AllowPrivateAccess = true))
+	float InFightRange;
+
 	float Speed, RightSpeed;
 	bool bFightMode;
 };

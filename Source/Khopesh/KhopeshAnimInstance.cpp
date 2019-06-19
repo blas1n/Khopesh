@@ -22,12 +22,13 @@ void UKhopeshAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	IsInAir = Owner->GetCharacterMovement()->IsFalling();
 }
 
-void UKhopeshAnimInstance::EnableFightMode()
+void UKhopeshAnimInstance::SetFightMode(bool IsFight)
 {
-	IsFightMode = true;
+	IsFightMode = IsFight;
 }
 
-void UKhopeshAnimInstance::PlayMontage(UAnimMontage* Montage)
+void UKhopeshAnimInstance::PlayMontageUnique(UAnimMontage* Montage)
 {
-	Montage_Play(Montage);
+	if (!Montage_IsPlaying(nullptr))
+		Montage_Play(Montage);
 }

@@ -38,7 +38,7 @@ AKhopeshCharacter::AKhopeshCharacter()
 	FollowCamera->bUsePawnControlRotation = false;
 
 	Speed = RightSpeed = 0.33f;
-	bFightMode = true;
+	bFightMode = false;
 }
 
 void AKhopeshCharacter::BeginPlay()
@@ -53,6 +53,33 @@ void AKhopeshCharacter::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 
 	Speed = FMath::Lerp(Speed, RightSpeed, DeltaSeconds * 10.0f);
+
+	if (bFightMode) return;
+
+	FCollisionQueryParams CollisionQueryParam(NAME_None, false, this);
+	TArray<FOverlapResult> Out;
+
+	GetWorld()->OverlapMultiByObjectType(
+		Out,
+		GetActorLocation(),
+		FQuat::Identity,
+		ECollisionChannel::ECC_Pawn,
+		FCollisionShape::MakeSphere(InFightRange),
+		CollisionQueryParam);
+
+	if (Out.Num() > 0 && !bFightMode) {
+		AnimInstance->SetFightMode(true);
+		AnimInstance->PlayMontageUnique(Equip);
+		RightSpeed += 0.33f;
+		bFightMode = true;
+	}
+
+	else if (bFightMode) {
+		AnimInstance->SetFightMode(false);
+		AnimInstance->PlayMontageUnique(Unequip);
+		RightSpeed -= 0.33f;
+		bFightMode = false;
+	}
 }
 
 void AKhopeshCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -89,10 +116,20 @@ void AKhopeshCharacter::MoveRight(float Value)
 
 void AKhopeshCharacter::Step()
 {
-	UAnimMontage* Dodge = bFightMode ? DodgeEquip : DodgeUnequip;
+	float Horizontal = GetInputAxisValue(TEXT("MoveRight"));
+	float Vertical = GetInputAxisValue(TEXT("MoveForward"));
 
-	if (!AnimInstance->Montage_IsPlaying(Dodge))
-		AnimInstance->PlayMontage(Dodge);
+	float CharacterRot = Horizontal * 90.0f;
+	CharacterRot += Horizontal * Vertical * -45.0f;
+
+	if (Horizontal == 0.0f)
+		CharacterRot = (Vertical == -1.0f) ? 180.0f : 0.0f;
+
+	const FRotator Rotation(0.0f, Controller->GetControlRotation().Yaw + CharacterRot, 0.0f);
+	SetActorRotation(Rotation);
+
+	UAnimMontage* Dodge = bFightMode ? DodgeEquip : DodgeUnequip;
+	AnimInstance->PlayMontageUnique(Dodge);
 }
 
 void AKhopeshCharacter::Move(EAxis::Type Axis, float Value)
