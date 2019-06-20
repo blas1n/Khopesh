@@ -12,6 +12,7 @@
 #include "KhopeshAnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "TimerManager.h"
+#include "Weapon.h"
 #include "DrawDebugHelpers.h"
 
 AKhopeshCharacter::AKhopeshCharacter()
@@ -49,6 +50,12 @@ void AKhopeshCharacter::OnSetFightMode(bool IsFightMode)
 	AnimInstance->SetFightMode(IsFightMode);
 	bFightMode = IsFightMode;
 
+	FName LeftWeaponSocket = bFightMode ? TEXT("equip_sword_l") : TEXT("enequip_sword_l");
+	FName RightWeaponSocket = bFightMode ? TEXT("equip_sword_r") : TEXT("enequip_sword_r");
+
+	LeftWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, LeftWeaponSocket);
+	RightWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, RightWeaponSocket);
+
 	if (IsFightMode && !bStartFight)
 	{
 		RightSpeed += 0.33f;
@@ -61,6 +68,8 @@ void AKhopeshCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	AnimInstance = Cast<UKhopeshAnimInstance>(GetMesh()->GetAnimInstance());
+
+	OnSetFightMode(false);
 }
 
 void AKhopeshCharacter::Tick(float DeltaSeconds)
@@ -82,7 +91,7 @@ void AKhopeshCharacter::Tick(float DeltaSeconds)
 
 	DrawDebugSphere(GetWorld(), GetActorLocation(), InFightRange, 32, FColor::Black);
 
-	if (Out.Num() > 0 && !bFightMode && !GetWorldTimerManager().IsTimerActive(EquipTimer))
+	if (Out.Num() > 0 && !bFightMode && !GetWorldTimerManager().TimerExists(EquipTimer))
 	{
 		GetWorldTimerManager().ClearTimer(UnequipTimer);
 
@@ -91,7 +100,7 @@ void AKhopeshCharacter::Tick(float DeltaSeconds)
 		}, FightSwapDelay, false);
 	}
 
-	else if (Out.Num() == 0 && bFightMode && !GetWorldTimerManager().IsTimerActive(UnequipTimer))
+	else if (Out.Num() == 0 && bFightMode && !GetWorldTimerManager().TimerExists(UnequipTimer))
 	{
 		GetWorldTimerManager().ClearTimer(EquipTimer);
 

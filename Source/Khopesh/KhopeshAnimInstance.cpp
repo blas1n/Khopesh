@@ -15,10 +15,10 @@ void UKhopeshAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
 
-	auto Owner = Cast<AKhopeshCharacter>(TryGetPawnOwner());
+	auto Owner = Cast<ACharacter>(TryGetPawnOwner());
 	if (!IsValid(Owner)) return;
 
-	Speed = Owner->GetSpeed();
+	Speed = Owner->GetVelocity().Size();
 	IsInAir = Owner->GetCharacterMovement()->IsFalling();
 }
 
