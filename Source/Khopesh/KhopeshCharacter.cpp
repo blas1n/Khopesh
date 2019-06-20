@@ -13,7 +13,6 @@
 #include "Animation/AnimMontage.h"
 #include "TimerManager.h"
 #include "Weapon.h"
-#include "DrawDebugHelpers.h"
 
 AKhopeshCharacter::AKhopeshCharacter()
 {
@@ -42,7 +41,7 @@ AKhopeshCharacter::AKhopeshCharacter()
 
 	Speed = 266.66f;
 	FightSwapDelay = 0.0f;
-	bFightMode = false;
+	bFightMode = bStartFight = bEquiping = bUnequiping = false;
 }
 
 void AKhopeshCharacter::OnSetFightMode(bool IsFightMode)
@@ -50,6 +49,9 @@ void AKhopeshCharacter::OnSetFightMode(bool IsFightMode)
 	AnimInstance->SetFightMode(IsFightMode);
 	SetEquip(IsFightMode);
 	bFightMode = IsFightMode;
+
+	bool& bReady = (IsFightMode ? bEquiping : bUnequiping);
+	bReady = false;
 
 	if (IsFightMode && !bStartFight)
 	{
@@ -81,35 +83,32 @@ void AKhopeshCharacter::Tick(float DeltaSeconds)
 		GetCharacterMovement()->MaxWalkSpeed,
 		Speed, DeltaSeconds * 10.0f);
 
-	FCollisionQueryParams CollisionQueryParam(NAME_None, false, this);
-	TArray<FOverlapResult> Out;
-
-	GetWorld()->OverlapMultiByObjectType(
-		Out,
-		GetActorLocation(),
-		FQuat::Identity,
-		ECollisionChannel::ECC_Pawn,
-		FCollisionShape::MakeSphere(InFightRange),
-		CollisionQueryParam);
-
-	DrawDebugSphere(GetWorld(), GetActorLocation(), InFightRange, 32, FColor::Black);
-
-	if (Out.Num() > 0 && !bFightMode && !GetWorldTimerManager().TimerExists(EquipTimer))
+	if (HaveEnemyNear())
 	{
-		GetWorldTimerManager().ClearTimer(UnequipTimer);
+		if (!bFightMode && !bEquiping)
+		{
+			GetWorldTimerManager().ClearTimer(UnequipTimer);
+			bUnequiping = false;
+			bEquiping = true;
 
-		GetWorldTimerManager().SetTimer(EquipTimer, [this]() {
-			AnimInstance->PlayMontageUnique(Equip);
-		}, FightSwapDelay, false);
+			GetWorldTimerManager().SetTimer(EquipTimer, [this]() {
+				AnimInstance->PlayMontageUnique(Equip);
+			}, FightSwapDelay, false);
+		}
 	}
 
-	else if (Out.Num() == 0 && bFightMode && !GetWorldTimerManager().TimerExists(UnequipTimer))
+	else 
 	{
-		GetWorldTimerManager().ClearTimer(EquipTimer);
+		if (bFightMode && !bUnequiping)
+		{
+			GetWorldTimerManager().ClearTimer(EquipTimer);
+			bEquiping = false;
+			bUnequiping = true;
 
-		GetWorldTimerManager().SetTimer(UnequipTimer, [this]() {
-			AnimInstance->PlayMontageUnique(Unequip);
-		}, FightSwapDelay, false);
+			GetWorldTimerManager().SetTimer(UnequipTimer, [this]() {
+				AnimInstance->PlayMontageUnique(Unequip);
+			}, FightSwapDelay, false);
+		}
 	}
 }
 
@@ -161,8 +160,7 @@ void AKhopeshCharacter::Step()
 	const FRotator Rotation(0.0f, Controller->GetControlRotation().Yaw + CharacterRot, 0.0f);
 	SetActorRotation(Rotation);
 
-	UAnimMontage* Dodge = bFightMode ? DodgeEquip : DodgeUnequip;
-	AnimInstance->PlayMontageUnique(Dodge);
+	AnimInstance->PlayMontageUnique(bFightMode ? DodgeEquip : DodgeUnequip);
 }
 
 void AKhopeshCharacter::Move(EAxis::Type Axis, float Value)
@@ -205,4 +203,20 @@ void AKhopeshCharacter::RunMode()
 	if (bStartFight) {
 		Speed += 266.66f;
 	}
+}
+
+bool AKhopeshCharacter::HaveEnemyNear()
+{
+	FCollisionQueryParams CollisionQueryParam(NAME_None, false, this);
+	TArray<FOverlapResult> Out;
+
+	GetWorld()->OverlapMultiByObjectType(
+		Out,
+		GetActorLocation(),
+		FQuat::Identity,
+		ECollisionChannel::ECC_Pawn,
+		FCollisionShape::MakeSphere(InFightRange),
+		CollisionQueryParam);
+
+	return Out.Num() > 0;
 }

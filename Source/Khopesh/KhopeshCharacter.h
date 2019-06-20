@@ -46,6 +46,8 @@ private:
 	void WalkMode();
 	void RunMode();
 
+	bool HaveEnemyNear();
+
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, Meta = (AllowPrivateAccess = true))
 	class UKhopeshAnimInstance* AnimInstance;
@@ -101,5 +103,7 @@ private:
 
 	bool bFightMode;
 	bool bStartFight;
+	bool bEquiping;
+	bool bUnequiping;
 };
 
