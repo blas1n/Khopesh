@@ -25,7 +25,7 @@ AKhopeshCharacter::AKhopeshCharacter()
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
-	GetCharacterMovement()->MaxWalkSpeed = 800.0f;
+	GetCharacterMovement()->MaxWalkSpeed = 266.66f;
 	GetCharacterMovement()->JumpZVelocity = 600.f;
 	GetCharacterMovement()->AirControl = 0.2f;
 	
@@ -40,7 +40,7 @@ AKhopeshCharacter::AKhopeshCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
 
-	Speed = RightSpeed = 0.33f;
+	Speed = 266.66f;
 	FightSwapDelay = 0.0f;
 	bFightMode = false;
 }
@@ -48,17 +48,12 @@ AKhopeshCharacter::AKhopeshCharacter()
 void AKhopeshCharacter::OnSetFightMode(bool IsFightMode)
 {
 	AnimInstance->SetFightMode(IsFightMode);
+	SetEquip(IsFightMode);
 	bFightMode = IsFightMode;
-
-	FName LeftWeaponSocket = bFightMode ? TEXT("equip_sword_l") : TEXT("enequip_sword_l");
-	FName RightWeaponSocket = bFightMode ? TEXT("equip_sword_r") : TEXT("enequip_sword_r");
-
-	LeftWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, LeftWeaponSocket);
-	RightWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, RightWeaponSocket);
 
 	if (IsFightMode && !bStartFight)
 	{
-		RightSpeed += 0.33f;
+		Speed += 266.66f;
 		bStartFight = true;
 	}
 }
@@ -69,14 +64,22 @@ void AKhopeshCharacter::BeginPlay()
 
 	AnimInstance = Cast<UKhopeshAnimInstance>(GetMesh()->GetAnimInstance());
 
-	OnSetFightMode(false);
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = SpawnParams.Instigator = this;
+
+	LeftWeapon = GetWorld()->SpawnActor<AWeapon>(LeftWeaponClass.Get(), SpawnParams);
+	RightWeapon = GetWorld()->SpawnActor<AWeapon>(RightWeaponClass.Get(), SpawnParams);
+
+	SetEquip(false);
 }
 
 void AKhopeshCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	Speed = FMath::Lerp(Speed, RightSpeed, DeltaSeconds * 10.0f);
+	GetCharacterMovement()->MaxWalkSpeed = FMath::Lerp(
+		GetCharacterMovement()->MaxWalkSpeed,
+		Speed, DeltaSeconds * 10.0f);
 
 	FCollisionQueryParams CollisionQueryParam(NAME_None, false, this);
 	TArray<FOverlapResult> Out;
@@ -130,7 +133,7 @@ void AKhopeshCharacter::MoveForward(float Value)
 {
 	if ((Controller != nullptr) && (!FMath::IsNearlyEqual(Value, 0.0f, 0.1f)))
 	{
-		Move(EAxis::X, Value * Speed);
+		Move(EAxis::X, Value);
 	}
 }
 
@@ -138,7 +141,7 @@ void AKhopeshCharacter::MoveRight(float Value)
 {
 	if ((Controller != nullptr) && (!FMath::IsNearlyEqual(Value, 0.0f, 0.1f)))
 	{
-		Move(EAxis::Y, Value * Speed);
+		Move(EAxis::Y, Value);
 	}
 }
 
@@ -171,16 +174,35 @@ void AKhopeshCharacter::Move(EAxis::Type Axis, float Value)
 	AddMovementInput(Direction, Value);
 }
 
+void AKhopeshCharacter::SetEquip(bool IsEquip)
+{
+	if (LeftWeapon)
+	{
+		LeftWeapon->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+	}
+
+	if (RightWeapon)
+	{
+		RightWeapon->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+	}
+
+	FName LeftWeaponSocket = IsEquip ? TEXT("equip_sword_l") : TEXT("unequip_sword_l");
+	FName RightWeaponSocket = IsEquip ? TEXT("equip_sword_r") : TEXT("unequip_sword_r");
+
+	LeftWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, LeftWeaponSocket);
+	RightWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, RightWeaponSocket);
+}
+
 void AKhopeshCharacter::WalkMode()
 {
 	if (bStartFight) {
-		RightSpeed -= 0.33f;
+		Speed -= 266.66f;
 	}
 }
 
 void AKhopeshCharacter::RunMode()
 {
 	if (bStartFight) {
-		RightSpeed += 0.33f;
+		Speed += 266.66f;
 	}
 }

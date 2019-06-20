@@ -13,7 +13,7 @@ class KHOPESH_API AWeapon : public AActor
 	
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Component, meta = (AllowPrivateAccess = true))
-	class UCapsuleComponent* Capsule;
+	class UBoxComponent* Box;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Component, meta = (AllowPrivateAccess = true))
 	class UStaticMeshComponent* Mesh;

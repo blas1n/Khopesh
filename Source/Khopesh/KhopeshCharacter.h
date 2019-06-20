@@ -41,6 +41,8 @@ public:
 
 private:
 	void Move(EAxis::Type Axis, float Value);
+	void SetEquip(bool IsEquip);
+
 	void WalkMode();
 	void RunMode();
 
@@ -49,10 +51,10 @@ private:
 	class UKhopeshAnimInstance* AnimInstance;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Weapon, Meta = (AllowPrivateAccess = true))
-	class AWeapon* LeftWeapon;
+	TSubclassOf<class AWeapon> LeftWeaponClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Weapon, Meta = (AllowPrivateAccess = true))
-	class AWeapon* RightWeapon;
+	TSubclassOf<class AWeapon> RightWeaponClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
 	class UAnimMontage* Attack;
@@ -90,9 +92,12 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Fight, Meta = (AllowPrivateAccess = true))
 	float FightSwapDelay;
 
+	class AWeapon* LeftWeapon;
+	class AWeapon* RightWeapon;
+
 	FTimerHandle EquipTimer, UnequipTimer;
 
-	float Speed, RightSpeed;
+	float Speed;
 
 	bool bFightMode;
 	bool bStartFight;

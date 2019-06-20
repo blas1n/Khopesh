@@ -1,14 +1,16 @@
 #include "Weapon.h"
 #include "KhopeshAnimInstance.h"
-#include "Components/CapsuleComponent.h"
+#include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
 
 AWeapon::AWeapon()
 {
  	PrimaryActorTick.bCanEverTick = false;
 	
-	Capsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Capsule"));
-	Capsule->SetupAttachment(RootComponent);
+	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+
+	Box = CreateDefaultSubobject<UBoxComponent>(TEXT("Box"));
+	Box->SetupAttachment(RootComponent);
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	Mesh->SetupAttachment(RootComponent);
@@ -16,5 +18,5 @@ AWeapon::AWeapon()
 
 void AWeapon::SetAttack(bool IsAttack)
 {
-	Capsule->SetActive(IsAttack);
+	Box->SetActive(IsAttack);
 }
