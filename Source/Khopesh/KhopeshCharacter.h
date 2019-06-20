@@ -21,6 +21,9 @@ private:
 public:
 	AKhopeshCharacter();
 
+public:
+	void OnSetFightMode(bool IsFightMode);
+
 private:
 	void MoveForward(float Value);
 	void MoveRight(float Value);
@@ -34,6 +37,7 @@ private:
 public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+	FORCEINLINE float GetSpeed() const { return Speed; }
 
 private:
 	void Move(EAxis::Type Axis, float Value);
@@ -80,7 +84,14 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Fight, Meta = (AllowPrivateAccess = true))
 	float InFightRange;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Fight, Meta = (AllowPrivateAccess = true))
+	float FightSwapDelay;
+
+	FTimerHandle EquipTimer, UnequipTimer;
+
 	float Speed, RightSpeed;
+
 	bool bFightMode;
+	bool bStartFight;
 };
 

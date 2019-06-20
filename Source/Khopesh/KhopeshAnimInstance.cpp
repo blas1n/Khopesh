@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "KhopeshAnimInstance.h"
-#include "GameFramework/Character.h"
+#include "KhopeshCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 UKhopeshAnimInstance::UKhopeshAnimInstance()
@@ -15,10 +15,10 @@ void UKhopeshAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
 
-	auto Owner = Cast<ACharacter>(TryGetPawnOwner());
+	auto Owner = Cast<AKhopeshCharacter>(TryGetPawnOwner());
 	if (!IsValid(Owner)) return;
 
-	Speed = Owner->GetVelocity().Size();
+	Speed = Owner->GetSpeed();
 	IsInAir = Owner->GetCharacterMovement()->IsFalling();
 }
 
@@ -31,4 +31,16 @@ void UKhopeshAnimInstance::PlayMontageUnique(UAnimMontage* Montage)
 {
 	if (!Montage_IsPlaying(nullptr))
 		Montage_Play(Montage);
+}
+
+void UKhopeshAnimInstance::AnimNotify_Equip()
+{
+	auto Owner = Cast<AKhopeshCharacter>(TryGetPawnOwner());
+	Owner->OnSetFightMode(true);
+}
+
+void UKhopeshAnimInstance::AnimNotify_Unequip()
+{
+	auto Owner = Cast<AKhopeshCharacter>(TryGetPawnOwner());
+	Owner->OnSetFightMode(false);
 }

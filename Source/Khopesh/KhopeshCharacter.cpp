@@ -11,6 +11,8 @@
 #include "ConstructorHelpers.h"
 #include "KhopeshAnimInstance.h"
 #include "Animation/AnimMontage.h"
+#include "TimerManager.h"
+#include "DrawDebugHelpers.h"
 
 AKhopeshCharacter::AKhopeshCharacter()
 {
@@ -38,7 +40,20 @@ AKhopeshCharacter::AKhopeshCharacter()
 	FollowCamera->bUsePawnControlRotation = false;
 
 	Speed = RightSpeed = 0.33f;
+	FightSwapDelay = 0.0f;
 	bFightMode = false;
+}
+
+void AKhopeshCharacter::OnSetFightMode(bool IsFightMode)
+{
+	AnimInstance->SetFightMode(IsFightMode);
+	bFightMode = IsFightMode;
+
+	if (IsFightMode && !bStartFight)
+	{
+		RightSpeed += 0.33f;
+		bStartFight = true;
+	}
 }
 
 void AKhopeshCharacter::BeginPlay()
@@ -54,8 +69,6 @@ void AKhopeshCharacter::Tick(float DeltaSeconds)
 
 	Speed = FMath::Lerp(Speed, RightSpeed, DeltaSeconds * 10.0f);
 
-	if (bFightMode) return;
-
 	FCollisionQueryParams CollisionQueryParam(NAME_None, false, this);
 	TArray<FOverlapResult> Out;
 
@@ -67,18 +80,24 @@ void AKhopeshCharacter::Tick(float DeltaSeconds)
 		FCollisionShape::MakeSphere(InFightRange),
 		CollisionQueryParam);
 
-	if (Out.Num() > 0 && !bFightMode) {
-		AnimInstance->SetFightMode(true);
-		AnimInstance->PlayMontageUnique(Equip);
-		RightSpeed += 0.33f;
-		bFightMode = true;
+	DrawDebugSphere(GetWorld(), GetActorLocation(), InFightRange, 32, FColor::Black);
+
+	if (Out.Num() > 0 && !bFightMode && !GetWorldTimerManager().IsTimerActive(EquipTimer))
+	{
+		GetWorldTimerManager().ClearTimer(UnequipTimer);
+
+		GetWorldTimerManager().SetTimer(EquipTimer, [this]() {
+			AnimInstance->PlayMontageUnique(Equip);
+		}, FightSwapDelay, false);
 	}
 
-	else if (bFightMode) {
-		AnimInstance->SetFightMode(false);
-		AnimInstance->PlayMontageUnique(Unequip);
-		RightSpeed -= 0.33f;
-		bFightMode = false;
+	else if (Out.Num() == 0 && bFightMode && !GetWorldTimerManager().IsTimerActive(UnequipTimer))
+	{
+		GetWorldTimerManager().ClearTimer(EquipTimer);
+
+		GetWorldTimerManager().SetTimer(UnequipTimer, [this]() {
+			AnimInstance->PlayMontageUnique(Unequip);
+		}, FightSwapDelay, false);
 	}
 }
 
@@ -116,6 +135,8 @@ void AKhopeshCharacter::MoveRight(float Value)
 
 void AKhopeshCharacter::Step()
 {
+	if (!bStartFight) return;
+
 	float Horizontal = GetInputAxisValue(TEXT("MoveRight"));
 	float Vertical = GetInputAxisValue(TEXT("MoveForward"));
 
@@ -143,10 +164,14 @@ void AKhopeshCharacter::Move(EAxis::Type Axis, float Value)
 
 void AKhopeshCharacter::WalkMode()
 {
-	RightSpeed -= 0.33f;
+	if (bStartFight) {
+		RightSpeed -= 0.33f;
+	}
 }
 
 void AKhopeshCharacter::RunMode()
 {
-	RightSpeed += 0.33f;
+	if (bStartFight) {
+		RightSpeed += 0.33f;
+	}
 }

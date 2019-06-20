@@ -13,12 +13,16 @@ class KHOPESH_API UKhopeshAnimInstance : public UAnimInstance
 	
 public:
 	UKhopeshAnimInstance();
-
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
-
 	void SetFightMode(bool IsFight);
-
 	void PlayMontageUnique(UAnimMontage* Montage);
+
+private:
+	UFUNCTION()
+	void AnimNotify_Equip();
+
+	UFUNCTION()
+	void AnimNotify_Unequip();
 
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
