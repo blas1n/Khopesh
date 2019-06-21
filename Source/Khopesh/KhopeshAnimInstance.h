@@ -13,9 +13,12 @@ class KHOPESH_API UKhopeshAnimInstance : public UAnimInstance
 	
 public:
 	UKhopeshAnimInstance();
+	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 	void SetFightMode(bool IsFight);
-	void PlayMontageUnique(UAnimMontage* Montage);
+	void PlayMontage(UAnimMontage* Montage);
+	bool PlayMontageUnique(UAnimMontage* Montage);
+	void PlayMontageEquip(UAnimMontage* EquipMontage);
 
 private:
 	UFUNCTION()
@@ -23,6 +26,8 @@ private:
 
 	UFUNCTION()
 	void AnimNotify_Unequip();
+
+	void MontageEnd(UAnimMontage* Montage, bool bInterrupted);
 
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
@@ -33,4 +38,6 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
 	bool IsFightMode;
+
+	UAnimMontage* EquipAnim;
 };

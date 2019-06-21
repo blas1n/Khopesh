@@ -50,8 +50,7 @@ void AKhopeshCharacter::OnSetFightMode(bool IsFightMode)
 	SetEquip(IsFightMode);
 	bFightMode = IsFightMode;
 
-	bool& bReady = (IsFightMode ? bEquiping : bUnequiping);
-	bReady = false;
+	bEquiping = bUnequiping = false;
 
 	if (IsFightMode && !bStartFight)
 	{
@@ -91,8 +90,10 @@ void AKhopeshCharacter::Tick(float DeltaSeconds)
 			bUnequiping = false;
 			bEquiping = true;
 
-			GetWorldTimerManager().SetTimer(EquipTimer, [this]() {
-				AnimInstance->PlayMontageUnique(Equip);
+			UE_LOG(LogTemp, Warning, TEXT("Equip"));
+			GetWorldTimerManager().SetTimer(EquipTimer, [this]()
+			{
+				AnimInstance->PlayMontageEquip(Equip);
 			}, FightSwapDelay, false);
 		}
 	}
@@ -105,8 +106,10 @@ void AKhopeshCharacter::Tick(float DeltaSeconds)
 			bEquiping = false;
 			bUnequiping = true;
 
-			GetWorldTimerManager().SetTimer(UnequipTimer, [this]() {
-				AnimInstance->PlayMontageUnique(Unequip);
+			UE_LOG(LogTemp, Warning, TEXT("UnEquip"));
+			GetWorldTimerManager().SetTimer(UnequipTimer, [this]()
+			{
+				AnimInstance->PlayMontageEquip(Unequip);
 			}, FightSwapDelay, false);
 		}
 	}
@@ -146,7 +149,7 @@ void AKhopeshCharacter::MoveRight(float Value)
 
 void AKhopeshCharacter::Step()
 {
-	if (!bStartFight) return;
+	if (!bStartFight || AnimInstance->Montage_IsPlaying(nullptr)) return;
 
 	float Horizontal = GetInputAxisValue(TEXT("MoveRight"));
 	float Vertical = GetInputAxisValue(TEXT("MoveForward"));
@@ -160,7 +163,7 @@ void AKhopeshCharacter::Step()
 	const FRotator Rotation(0.0f, Controller->GetControlRotation().Yaw + CharacterRot, 0.0f);
 	SetActorRotation(Rotation);
 
-	AnimInstance->PlayMontageUnique(bFightMode ? DodgeEquip : DodgeUnequip);
+	AnimInstance->PlayMontage(bFightMode ? DodgeEquip : DodgeUnequip);
 }
 
 void AKhopeshCharacter::Move(EAxis::Type Axis, float Value)
