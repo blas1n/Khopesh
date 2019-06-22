@@ -6,6 +6,27 @@
 #include "Animation/AnimInstance.h"
 #include "KhopeshAnimInstance.generated.h"
 
+DECLARE_DELEGATE(FOnAttack);
+DECLARE_DELEGATE(FOnNextCombo);
+DECLARE_DELEGATE(FOnEndCombo);
+DECLARE_DELEGATE_OneParam(FOnSetFightMode, bool);
+
+UENUM()
+enum class EMontage : uint8
+{
+	ATTACK_WEAK UMETA(DisplayName = "Attack Weak"),
+	ATTACK_STRONG UMETA(DisplayName = "Attack Strong"),
+	DODGE_EQUIP UMETA(DisplayName = "Dodge Equip"),
+	DODGE_UNEQUIP UMETA(DisplayName = "Dodge Unequip"),
+	DEFENSE UMETA(DisplayName = "Defense"),
+	HIT_WEAK UMETA(DisplayName = "Hit Weak"),
+	HIT_STRONG UMETA(DisplayName = "Hit Strong"),
+	BROKEN UMETA(DisplayName = "Broken"),
+	EQUIP UMETA(DisplayName = "Equip"),
+	UNEQUIP UMETA(DisplayName = "Unequip"),
+	DIE UMETA(DisplayName = "Die"),
+};
+
 UCLASS()
 class KHOPESH_API UKhopeshAnimInstance : public UAnimInstance
 {
@@ -16,9 +37,8 @@ public:
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 	void SetFightMode(bool IsFight);
-	void PlayMontage(UAnimMontage* Montage);
-	bool PlayMontageUnique(UAnimMontage* Montage);
-	void PlayMontageEquip(UAnimMontage* EquipMontage);
+
+	void PlayMontage(EMontage Montage);
 
 private:
 	UFUNCTION()
@@ -27,9 +47,54 @@ private:
 	UFUNCTION()
 	void AnimNotify_Unequip();
 
-	void MontageEnd(UAnimMontage* Montage, bool bInterrupted);
+	UFUNCTION()
+	void AnimNotify_OnAttack();
+
+	UFUNCTION()
+	void AnimNotify_OnNextAttack();
+
+	FName GetAttackSection(uint8 Index);
+
+public:
+	FOnAttack OnAttack;
+	FOnNextCombo OnNextCombo;
+	FOnEndCombo OnEndCombo;
+	FOnSetFightMode OnSetFightMode;
 
 private:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* AttackWeak;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* AttackStrong;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* DodgeEquip;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* DodgeUnequip;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* Defense;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* HitWeak;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* HitStrong;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* Broken;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* Equip;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* Unequip;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* Die;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
 	float Speed;
 
@@ -39,5 +104,10 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
 	bool IsFightMode;
 
-	UAnimMontage* EquipAnim;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attack, Meta = (AllowPrivateAccess = true))
+	float ComboDelay;
+
+	TMap<EMontage, UAnimMontage*> MontageMap;
+
+	FTimerHandle ComboTimer;
 };

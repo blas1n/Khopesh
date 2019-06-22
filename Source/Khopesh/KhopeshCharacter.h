@@ -18,11 +18,14 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = true))
 	class UCameraComponent* FollowCamera;
 
-public:
-	AKhopeshCharacter();
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = true))
+	class UStaticMeshComponent* LeftWeapon;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = true))
+	class UStaticMeshComponent* RightWeapon;
 
 public:
-	void OnSetFightMode(bool IsFightMode);
+	AKhopeshCharacter();
 
 private:
 	void MoveForward(float Value);
@@ -37,71 +40,30 @@ private:
 public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
-	FORCEINLINE float GetSpeed() const { return Speed; }
 
 private:
+	void OnAttack();
+	void OnDefense();
+
 	void Move(EAxis::Type Axis, float Value);
 	void SetEquip(bool IsEquip);
 
 	void WalkMode();
 	void RunMode();
 
-	bool HaveEnemyNear();
+	bool IsEnemyNear();
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, Meta = (AllowPrivateAccess = true))
-	class UKhopeshAnimInstance* AnimInstance;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Weapon, Meta = (AllowPrivateAccess = true))
-	TSubclassOf<class AWeapon> LeftWeaponClass;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Weapon, Meta = (AllowPrivateAccess = true))
-	TSubclassOf<class AWeapon> RightWeaponClass;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
-	class UAnimMontage* Attack;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
-	class UAnimMontage* DodgeEquip;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
-	class UAnimMontage* DodgeUnequip;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
-	class UAnimMontage* Defense;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
-	class UAnimMontage* HitLight;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
-	class UAnimMontage* HitHeavy;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
-	class UAnimMontage* Broken;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
-	class UAnimMontage* Die;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
-	class UAnimMontage* Equip;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
-	class UAnimMontage* Unequip;
+	class UKhopeshAnimInstance* Anim;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Fight, Meta = (AllowPrivateAccess = true))
 	float InFightRange;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Fight, Meta = (AllowPrivateAccess = true))
-	float FightSwapDelay;
-
-	class AWeapon* LeftWeapon;
-	class AWeapon* RightWeapon;
-
-	FTimerHandle EquipTimer, UnequipTimer;
-
 	float Speed;
 
 	bool bFightMode;
+	bool bStrongMode;
 	bool bStartFight;
 	bool bEquiping;
 	bool bUnequiping;

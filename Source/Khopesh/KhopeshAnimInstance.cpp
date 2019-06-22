@@ -3,18 +3,30 @@
 #include "KhopeshAnimInstance.h"
 #include "KhopeshCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "TimerManager.h"
 
 UKhopeshAnimInstance::UKhopeshAnimInstance()
 {
 	Speed = 0.0f;
 	IsInAir = false;
 	IsFightMode = false;
-	EquipAnim = nullptr;
 }
 
 void UKhopeshAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
+
+	MontageMap.Emplace(EMontage::ATTACK_WEAK, AttackWeak);
+	MontageMap.Emplace(EMontage::ATTACK_STRONG, AttackStrong);
+	MontageMap.Emplace(EMontage::DODGE_EQUIP, DodgeEquip);
+	MontageMap.Emplace(EMontage::DODGE_UNEQUIP, DodgeUnequip);
+	MontageMap.Emplace(EMontage::DEFENSE, Defense);
+	MontageMap.Emplace(EMontage::HIT_WEAK, HitWeak);
+	MontageMap.Emplace(EMontage::HIT_STRONG, HitStrong);
+	MontageMap.Emplace(EMontage::BROKEN, Broken);
+	MontageMap.Emplace(EMontage::EQUIP, Equip);
+	MontageMap.Emplace(EMontage::UNEQUIP, Unequip);
+	MontageMap.Emplace(EMontage::DIE, Die);
 }
 
 void UKhopeshAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -33,52 +45,37 @@ void UKhopeshAnimInstance::SetFightMode(bool IsFight)
 	IsFightMode = IsFight;
 }
 
-void UKhopeshAnimInstance::PlayMontage(UAnimMontage* Montage)
+void UKhopeshAnimInstance::PlayMontage(EMontage Montage)
 {
-	Montage_Play(Montage);
-	FOnMontageEnded MontageEndDelegate;
-	MontageEndDelegate.BindUObject(this, &UKhopeshAnimInstance::MontageEnd);
-	Montage_SetEndDelegate(MontageEndDelegate, Montage);
-}
-
-bool UKhopeshAnimInstance::PlayMontageUnique(UAnimMontage* Montage)
-{
-	if (!Montage_IsPlaying(nullptr))
-	{
-		PlayMontage(Montage);
-		return true;
-	}
-
-	return false;
-}
-
-void UKhopeshAnimInstance::PlayMontageEquip(UAnimMontage* EquipMontage)
-{
-	if (!PlayMontageUnique(EquipMontage))
-	{
-		EquipAnim = EquipMontage;
-	}
+	Montage_Play(MontageMap[Montage]);
 }
 
 void UKhopeshAnimInstance::AnimNotify_Equip()
 {
-	auto Owner = Cast<AKhopeshCharacter>(TryGetPawnOwner());
-	Owner->OnSetFightMode(true);
+	OnSetFightMode.Execute(true);
 }
 
 void UKhopeshAnimInstance::AnimNotify_Unequip()
 {
-	auto Owner = Cast<AKhopeshCharacter>(TryGetPawnOwner());
-	Owner->OnSetFightMode(false);
+	OnSetFightMode.Execute(false);
 }
 
-void UKhopeshAnimInstance::MontageEnd(UAnimMontage* Montage, bool bInterrupted)
+void UKhopeshAnimInstance::AnimNotify_OnAttack()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Bind"));
+	OnAttack.Execute();
+}
 
-	if (EquipAnim != nullptr)
+void UKhopeshAnimInstance::AnimNotify_OnNextAttack()
+{
+	OnNextCombo.Execute();
+
+	TryGetPawnOwner()->GetWorldTimerManager().SetTimer(ComboTimer, [this]()
 	{
-		Montage_Play(EquipAnim);
-		EquipAnim = nullptr;
-	}
+		OnEndCombo.Execute();
+	}, ComboDelay, false);
+}
+
+FName UKhopeshAnimInstance::GetAttackSection(uint8 Index)
+{
+	return FName(*FString::Printf(TEXT("Attack_%d"), Index));
 }

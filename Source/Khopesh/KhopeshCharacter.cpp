@@ -7,8 +7,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "ConstructorHelpers.h"
 #include "KhopeshAnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "TimerManager.h"
@@ -39,39 +39,34 @@ AKhopeshCharacter::AKhopeshCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
 
+	LeftWeapon = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LeftWeapon"));
+	LeftWeapon->SetupAttachment(GetMesh(), TEXT("unequip_sword_l"));
+
+	RightWeapon = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RightWeapon"));
+	RightWeapon->SetupAttachment(GetMesh(), TEXT("unequip_sword_r"));
+
 	Speed = 266.66f;
-	FightSwapDelay = 0.0f;
-	bFightMode = bStartFight = bEquiping = bUnequiping = false;
-}
-
-void AKhopeshCharacter::OnSetFightMode(bool IsFightMode)
-{
-	AnimInstance->SetFightMode(IsFightMode);
-	SetEquip(IsFightMode);
-	bFightMode = IsFightMode;
-
-	bEquiping = bUnequiping = false;
-
-	if (IsFightMode && !bStartFight)
-	{
-		Speed += 266.66f;
-		bStartFight = true;
-	}
+	bFightMode = bStartFight = bStrongMode = bEquiping = bUnequiping = false;
 }
 
 void AKhopeshCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	AnimInstance = Cast<UKhopeshAnimInstance>(GetMesh()->GetAnimInstance());
+	Anim = Cast<UKhopeshAnimInstance>(GetMesh()->GetAnimInstance());
 
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.Owner = SpawnParams.Instigator = this;
-
-	LeftWeapon = GetWorld()->SpawnActor<AWeapon>(LeftWeaponClass.Get(), SpawnParams);
-	RightWeapon = GetWorld()->SpawnActor<AWeapon>(RightWeaponClass.Get(), SpawnParams);
-
-	SetEquip(false);
+	Anim->OnSetFightMode.BindLambda([this](bool IsFightMode)
+	{
+		Anim->SetFightMode(IsFightMode);
+		SetEquip(IsFightMode);
+		bFightMode = IsFightMode;
+	
+		if (IsFightMode && !bStartFight)
+		{
+			Speed += 266.66f;
+			bStartFight = true;
+		}
+	});
 }
 
 void AKhopeshCharacter::Tick(float DeltaSeconds)
@@ -82,35 +77,23 @@ void AKhopeshCharacter::Tick(float DeltaSeconds)
 		GetCharacterMovement()->MaxWalkSpeed,
 		Speed, DeltaSeconds * 10.0f);
 
-	if (HaveEnemyNear())
+	if (IsEnemyNear())
 	{
 		if (!bFightMode && !bEquiping)
 		{
-			GetWorldTimerManager().ClearTimer(UnequipTimer);
-			bUnequiping = false;
+			Anim->PlayMontage(EMontage::EQUIP);
 			bEquiping = true;
-
-			UE_LOG(LogTemp, Warning, TEXT("Equip"));
-			GetWorldTimerManager().SetTimer(EquipTimer, [this]()
-			{
-				AnimInstance->PlayMontageEquip(Equip);
-			}, FightSwapDelay, false);
+			bUnequiping = false;
 		}
 	}
 
-	else 
+	else
 	{
 		if (bFightMode && !bUnequiping)
 		{
-			GetWorldTimerManager().ClearTimer(EquipTimer);
-			bEquiping = false;
+			Anim->PlayMontage(EMontage::UNEQUIP);
 			bUnequiping = true;
-
-			UE_LOG(LogTemp, Warning, TEXT("UnEquip"));
-			GetWorldTimerManager().SetTimer(UnequipTimer, [this]()
-			{
-				AnimInstance->PlayMontageEquip(Unequip);
-			}, FightSwapDelay, false);
+			bEquiping = false;
 		}
 	}
 }
@@ -124,6 +107,9 @@ void AKhopeshCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerI
 
 	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
+
+	PlayerInputComponent->BindAction("Attack", IE_Pressed, this, &AKhopeshCharacter::OnAttack);
+	PlayerInputComponent->BindAction("Defense", IE_Pressed, this, &AKhopeshCharacter::OnDefense);
 
 	PlayerInputComponent->BindAction("Step", IE_Pressed, this, &AKhopeshCharacter::Step);
 
@@ -149,7 +135,8 @@ void AKhopeshCharacter::MoveRight(float Value)
 
 void AKhopeshCharacter::Step()
 {
-	if (!bStartFight || AnimInstance->Montage_IsPlaying(nullptr)) return;
+	if (!bStartFight || Anim->Montage_IsPlaying(nullptr) || GetCharacterMovement()->IsFalling())
+		return;
 
 	float Horizontal = GetInputAxisValue(TEXT("MoveRight"));
 	float Vertical = GetInputAxisValue(TEXT("MoveForward"));
@@ -163,7 +150,17 @@ void AKhopeshCharacter::Step()
 	const FRotator Rotation(0.0f, Controller->GetControlRotation().Yaw + CharacterRot, 0.0f);
 	SetActorRotation(Rotation);
 
-	AnimInstance->PlayMontage(bFightMode ? DodgeEquip : DodgeUnequip);
+	Anim->PlayMontage(bFightMode ? EMontage::DODGE_EQUIP : EMontage::DODGE_UNEQUIP);
+}
+
+void AKhopeshCharacter::OnAttack()
+{
+
+}
+
+void AKhopeshCharacter::OnDefense()
+{
+	
 }
 
 void AKhopeshCharacter::Move(EAxis::Type Axis, float Value)
@@ -177,16 +174,6 @@ void AKhopeshCharacter::Move(EAxis::Type Axis, float Value)
 
 void AKhopeshCharacter::SetEquip(bool IsEquip)
 {
-	if (LeftWeapon)
-	{
-		LeftWeapon->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-	}
-
-	if (RightWeapon)
-	{
-		RightWeapon->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-	}
-
 	FName LeftWeaponSocket = IsEquip ? TEXT("equip_sword_l") : TEXT("unequip_sword_l");
 	FName RightWeaponSocket = IsEquip ? TEXT("equip_sword_r") : TEXT("unequip_sword_r");
 
@@ -196,19 +183,21 @@ void AKhopeshCharacter::SetEquip(bool IsEquip)
 
 void AKhopeshCharacter::WalkMode()
 {
-	if (bStartFight) {
+	if (bStartFight)
+	{
 		Speed -= 266.66f;
 	}
 }
 
 void AKhopeshCharacter::RunMode()
 {
-	if (bStartFight) {
+	if (bStartFight)
+	{
 		Speed += 266.66f;
 	}
 }
 
-bool AKhopeshCharacter::HaveEnemyNear()
+bool AKhopeshCharacter::IsEnemyNear()
 {
 	FCollisionQueryParams CollisionQueryParam(NAME_None, false, this);
 	TArray<FOverlapResult> Out;
