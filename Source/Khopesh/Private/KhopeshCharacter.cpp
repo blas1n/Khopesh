@@ -90,7 +90,7 @@ void AKhopeshCharacter::Tick(float DeltaSeconds)
 
 	if (IsEnemyNear())
 	{
-		if (!Anim->Montage_IsPlaying(nullptr) && !bFightMode && !bEquiping)
+		if (!Anim->IsPlayMontage() && !bFightMode && !bEquiping)
 		{
 			Anim->PlayMontage(EMontage::EQUIP);
 			bEquiping = true;
@@ -100,7 +100,7 @@ void AKhopeshCharacter::Tick(float DeltaSeconds)
 
 	else
 	{
-		if (!Anim->Montage_IsPlaying(nullptr) && bFightMode && !bUnequiping)
+		if (!Anim->IsPlayMontage() && bFightMode && !bUnequiping)
 		{
 			Anim->PlayMontage(EMontage::UNEQUIP);
 			bUnequiping = true;
@@ -146,21 +146,25 @@ void AKhopeshCharacter::MoveRight(float Value)
 
 void AKhopeshCharacter::Step()
 {
-	if (!bStartFight || Anim->IsPlayMontage() || GetCharacterMovement()->IsFalling())
-		return;
+	if (bStartFight && !Anim->IsPlayMontage() && !GetCharacterMovement()->IsFalling())
+	{
+		Step_Server(GetRotatorByInputKey());
+	}
+}
 
-	float Horizontal = GetInputAxisValue(TEXT("MoveRight"));
-	float Vertical = GetInputAxisValue(TEXT("MoveForward"));
+void AKhopeshCharacter::Step_Server_Implementation(FRotator NewRotation)
+{
+	Step_Multicast(NewRotation);
+}
 
-	float CharacterRot = Horizontal * 90.0f;
-	CharacterRot += Horizontal * Vertical * -45.0f;
+bool AKhopeshCharacter::Step_Server_Validate(FRotator NewRotation)
+{
+	return true;
+}
 
-	if (Horizontal == 0.0f)
-		CharacterRot = (Vertical == -1.0f) ? 180.0f : 0.0f;
-
-	const FRotator Rotation(0.0f, Controller->GetControlRotation().Yaw + CharacterRot, 0.0f);
-	SetActorRotation(Rotation);
-
+void AKhopeshCharacter::Step_Multicast_Implementation(FRotator NewRotation)
+{
+	SetActorRotation(NewRotation);
 	Anim->PlayMontage(bFightMode ? EMontage::DODGE_EQUIP : EMontage::DODGE_UNEQUIP);
 }
 
@@ -174,7 +178,7 @@ void AKhopeshCharacter::Attack()
 
 void AKhopeshCharacter::Defense()
 {
-	bStrongMode = !bStrongMode;
+	
 }
 
 void AKhopeshCharacter::Move(EAxis::Type Axis, float Value)
@@ -258,7 +262,7 @@ void AKhopeshCharacter::OnAttack()
 	}
 }
 
-bool AKhopeshCharacter::IsEnemyNear()
+bool AKhopeshCharacter::IsEnemyNear() const
 {
 	FCollisionQueryParams CollisionQueryParam(NAME_None, false, this);
 	TArray<FOverlapResult> Out;
@@ -272,4 +276,18 @@ bool AKhopeshCharacter::IsEnemyNear()
 		CollisionQueryParam);
 
 	return Out.Num() > 0;
+}
+
+FRotator AKhopeshCharacter::GetRotatorByInputKey() const
+{
+	float Horizontal = GetInputAxisValue(TEXT("MoveRight"));
+	float Vertical = GetInputAxisValue(TEXT("MoveForward"));
+
+	float CharacterRot = Horizontal * 90.0f;
+	CharacterRot += Horizontal * Vertical * -45.0f;
+
+	if (Horizontal == 0.0f)
+		CharacterRot = (Vertical == -1.0f) ? 180.0f : 0.0f;
+
+	return FRotator(0.0f, GetControlRotation().Yaw + CharacterRot, 0.0f);
 }

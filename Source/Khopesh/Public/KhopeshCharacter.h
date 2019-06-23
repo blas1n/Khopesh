@@ -30,7 +30,19 @@ public:
 private:
 	void MoveForward(float Value);
 	void MoveRight(float Value);
+
 	void Step();
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Step_Server(FRotator NewRotation);
+
+	void Step_Server_Implementation(FRotator NewRotation);
+	bool Step_Server_Validate(FRotator NewRotation);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Step_Multicast(FRotator NewRotation);
+
+	void Step_Multicast_Implementation(FRotator NewRotation);
 
 private:
 	virtual void BeginPlay() override;
@@ -52,7 +64,9 @@ private:
 	void RunMode();
 
 	void OnAttack();
-	bool IsEnemyNear();
+	bool IsEnemyNear() const;
+
+	FRotator GetRotatorByInputKey() const;
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, Meta = (AllowPrivateAccess = true))
