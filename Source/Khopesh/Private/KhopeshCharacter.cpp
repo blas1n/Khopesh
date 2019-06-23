@@ -11,6 +11,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "KhopeshAnimInstance.h"
 #include "Animation/AnimMontage.h"
+#include "UnrealNetwork.h"
 #include "TimerManager.h"
 #include "DrawDebugHelpers.h"
 
@@ -24,7 +25,7 @@ AKhopeshCharacter::AKhopeshCharacter()
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
-	GetCharacterMovement()->MaxWalkSpeed = 266.66f;
+	GetCharacterMovement()->MaxWalkSpeed = IncreaseSpeed;
 	GetCharacterMovement()->JumpZVelocity = 600.f;
 	GetCharacterMovement()->AirControl = 0.2f;
 	
@@ -53,7 +54,7 @@ AKhopeshCharacter::AKhopeshCharacter()
 	RightWeapon->SetGenerateOverlapEvents(false);
 	RightWeapon->SetEnableGravity(false);
 
-	Speed = 266.66f;
+	Speed = IncreaseSpeed;
 	bFightMode = bStartFight = bStrongMode = bEquiping = bUnequiping = false;
 	CurrentSection = 0;
 }
@@ -72,7 +73,7 @@ void AKhopeshCharacter::BeginPlay()
 	
 		if (IsFightMode && !bStartFight)
 		{
-			Speed += 266.66f;
+			Speed += IncreaseSpeed;
 			bStartFight = true;
 		}
 	});
@@ -88,11 +89,13 @@ void AKhopeshCharacter::Tick(float DeltaSeconds)
 		GetCharacterMovement()->MaxWalkSpeed,
 		Speed, DeltaSeconds * 10.0f);
 
+	if (!HasAuthority()) return;
+
 	if (IsEnemyNear())
 	{
 		if (!Anim->IsPlayMontage() && !bFightMode && !bEquiping)
 		{
-			Anim->PlayMontage(EMontage::EQUIP);
+			PlayEquip(true);
 			bEquiping = true;
 			bUnequiping = false;
 		}
@@ -102,11 +105,18 @@ void AKhopeshCharacter::Tick(float DeltaSeconds)
 	{
 		if (!Anim->IsPlayMontage() && bFightMode && !bUnequiping)
 		{
-			Anim->PlayMontage(EMontage::UNEQUIP);
+			PlayEquip(false);
 			bUnequiping = true;
 			bEquiping = false;
 		}
 	}
+}
+
+void AKhopeshCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AKhopeshCharacter, Speed);
 }
 
 void AKhopeshCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -146,10 +156,12 @@ void AKhopeshCharacter::MoveRight(float Value)
 
 void AKhopeshCharacter::Step()
 {
-	if (bStartFight && !Anim->IsPlayMontage() && !GetCharacterMovement()->IsFalling())
-	{
-		Step_Server(GetRotatorByInputKey());
-	}
+	if (!bStartFight || Anim->IsPlayMontage() || GetCharacterMovement()->IsFalling())
+		return;
+
+	FRotator NewRot = GetRotatorByInputKey();
+	StepImpl(NewRot);
+	Step_Server(NewRot);
 }
 
 void AKhopeshCharacter::Step_Server_Implementation(FRotator NewRotation)
@@ -164,21 +176,40 @@ bool AKhopeshCharacter::Step_Server_Validate(FRotator NewRotation)
 
 void AKhopeshCharacter::Step_Multicast_Implementation(FRotator NewRotation)
 {
-	SetActorRotation(NewRotation);
-	Anim->PlayMontage(bFightMode ? EMontage::DODGE_EQUIP : EMontage::DODGE_UNEQUIP);
+	if (Role != ROLE_AutonomousProxy)
+	{
+		StepImpl(NewRotation);
+	}
 }
 
 void AKhopeshCharacter::Attack()
 {
 	if (!bFightMode || Anim->IsPlayMontage()) return;
 
-	Anim->PlayAttackMontage(bStrongMode ? EMontage::ATTACK_STRONG : EMontage::ATTACK_WEAK, CurrentSection++);
-	CurrentSection %= MaxSection;
+	AttackImpl();
+	Attack_Server();
+}
+
+void AKhopeshCharacter::Attack_Server_Implementation()
+{
+	Attack_Multicast();
+}
+
+bool AKhopeshCharacter::Attack_Server_Validate()
+{
+	return true;
+}
+
+void AKhopeshCharacter::Attack_Multicast_Implementation()
+{
+	if (Role != ROLE_AutonomousProxy)
+	{
+		AttackImpl();
+	}
 }
 
 void AKhopeshCharacter::Defense()
 {
-	
 }
 
 void AKhopeshCharacter::Move(EAxis::Type Axis, float Value)
@@ -201,27 +232,39 @@ void AKhopeshCharacter::SetEquip(bool IsEquip)
 	CurrentSection = 0;
 }
 
-void AKhopeshCharacter::WalkMode()
+void AKhopeshCharacter::WalkMode_Implementation()
 {
 	if (bStartFight)
 	{
-		Speed -= 266.66f;
+		Speed -= IncreaseSpeed;
 	}
 }
 
-void AKhopeshCharacter::RunMode()
+bool AKhopeshCharacter::WalkMode_Validate()
+{
+	return true;
+}
+
+void AKhopeshCharacter::RunMode_Implementation()
 {
 	if (bStartFight)
 	{
-		Speed += 266.66f;
+		Speed += IncreaseSpeed;
 	}
+}
+
+bool AKhopeshCharacter::RunMode_Validate()
+{
+	return true;
 }
 
 void AKhopeshCharacter::OnAttack()
 {
-	FCollisionObjectQueryParams CollisionObjectQueryParams(ECollisionChannel::ECC_Pawn);
-	FCollisionQueryParams CollisionQueryParams(NAME_None, false, this);
+	AttackCheck();
+}
 
+void AKhopeshCharacter::AttackCheck_Implementation()
+{
 	TArray<FHitResult> Out;
 
 	bool bResult = GetWorld()->SweepMultiByObjectType(
@@ -229,9 +272,9 @@ void AKhopeshCharacter::OnAttack()
 		GetActorLocation(),
 		GetActorLocation() + GetActorForwardVector() * AttackRange,
 		FQuat::Identity,
-		CollisionObjectQueryParams,
+		FCollisionObjectQueryParams(ECollisionChannel::ECC_Pawn),
 		FCollisionShape::MakeSphere(AttackRange),
-		CollisionQueryParams
+		FCollisionQueryParams(NAME_None, false, this)
 	);
 
 #if ENABLE_DRAW_DEBUG
@@ -264,18 +307,15 @@ void AKhopeshCharacter::OnAttack()
 
 bool AKhopeshCharacter::IsEnemyNear() const
 {
-	FCollisionQueryParams CollisionQueryParam(NAME_None, false, this);
-	TArray<FOverlapResult> Out;
+	DrawDebugSphere(GetWorld(), GetActorLocation(), InFightRange, 32, FColor::Black);
 
-	GetWorld()->OverlapMultiByObjectType(
-		Out,
+	return GetWorld()->OverlapAnyTestByObjectType(
 		GetActorLocation(),
 		FQuat::Identity,
-		ECollisionChannel::ECC_Pawn,
+		FCollisionObjectQueryParams(ECollisionChannel::ECC_Pawn),
 		FCollisionShape::MakeSphere(InFightRange),
-		CollisionQueryParam);
-
-	return Out.Num() > 0;
+		FCollisionQueryParams(NAME_None, false, this)
+	);
 }
 
 FRotator AKhopeshCharacter::GetRotatorByInputKey() const
@@ -290,4 +330,21 @@ FRotator AKhopeshCharacter::GetRotatorByInputKey() const
 		CharacterRot = (Vertical == -1.0f) ? 180.0f : 0.0f;
 
 	return FRotator(0.0f, GetControlRotation().Yaw + CharacterRot, 0.0f);
+}
+
+void AKhopeshCharacter::PlayEquip_Implementation(bool IsEquip)
+{
+	Anim->PlayMontage(IsEquip ? EMontage::EQUIP : EMontage::UNEQUIP);
+}
+
+void AKhopeshCharacter::AttackImpl()
+{
+	Anim->PlayAttackMontage(bStrongMode ? EMontage::ATTACK_STRONG : EMontage::ATTACK_WEAK, CurrentSection++);
+	CurrentSection %= MaxSection;
+}
+
+void AKhopeshCharacter::StepImpl(const FRotator& NewRotation)
+{
+	SetActorRotation(NewRotation);
+	Anim->PlayMontage(bFightMode ? EMontage::DODGE_EQUIP : EMontage::DODGE_UNEQUIP);
 }

@@ -47,6 +47,7 @@ private:
 private:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DelatSeconds) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 public:
@@ -55,18 +56,53 @@ public:
 
 private:
 	void Attack();
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Attack_Server();
+
+	void Attack_Server_Implementation();
+	bool Attack_Server_Validate();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Attack_Multicast();
+
+	void Attack_Multicast_Implementation();
+
 	void Defense();
 
 	void Move(EAxis::Type Axis, float Value);
 	void SetEquip(bool IsEquip);
 
+	UFUNCTION(Server, Reliable, WithValidation)
 	void WalkMode();
+
+	void WalkMode_Implementation();
+	bool WalkMode_Validate();
+
+	UFUNCTION(Server, Reliable, WithValidation)
 	void RunMode();
 
+	void RunMode_Implementation();
+	bool RunMode_Validate();
+
 	void OnAttack();
+
+	UFUNCTION(Client, Reliable)
+	void AttackCheck();
+
+	void AttackCheck_Implementation();
+
 	bool IsEnemyNear() const;
 
 	FRotator GetRotatorByInputKey() const;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void PlayEquip(bool IsEquip);
+
+	void PlayEquip_Implementation(bool IsEquip);
+
+	void AttackImpl();
+	void StepImpl(const FRotator& NewRotation);
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, Meta = (AllowPrivateAccess = true))
@@ -87,6 +123,9 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Fight, Meta = (AllowPrivateAccess = true))
 	float StrongAttackDamage;
 
+	constexpr static float IncreaseSpeed = 211.0f;
+
+	UPROPERTY(Replicated)
 	float Speed;
 
 	bool bFightMode;
