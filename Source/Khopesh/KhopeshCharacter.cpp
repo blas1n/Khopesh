@@ -79,7 +79,7 @@ void AKhopeshCharacter::Tick(float DeltaSeconds)
 
 	if (IsEnemyNear())
 	{
-		if (!bFightMode && !bEquiping)
+		if (!Anim->Montage_IsPlaying(nullptr) && !bFightMode && !bEquiping)
 		{
 			Anim->PlayMontage(EMontage::EQUIP);
 			bEquiping = true;
@@ -89,7 +89,7 @@ void AKhopeshCharacter::Tick(float DeltaSeconds)
 
 	else
 	{
-		if (bFightMode && !bUnequiping)
+		if (!Anim->Montage_IsPlaying(nullptr) && bFightMode && !bUnequiping)
 		{
 			Anim->PlayMontage(EMontage::UNEQUIP);
 			bUnequiping = true;
