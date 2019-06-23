@@ -40,9 +40,17 @@ AKhopeshCharacter::AKhopeshCharacter()
 
 	LeftWeapon = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LeftWeapon"));
 	LeftWeapon->SetupAttachment(GetMesh(), TEXT("unequip_sword_l"));
+	LeftWeapon->CanCharacterStepUpOn = ECanBeCharacterBase::ECB_No;
+	LeftWeapon->SetCollisionProfileName(TEXT("NoCollision"));
+	LeftWeapon->SetGenerateOverlapEvents(false);
+	LeftWeapon->SetEnableGravity(false);
 
 	RightWeapon = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RightWeapon"));
 	RightWeapon->SetupAttachment(GetMesh(), TEXT("unequip_sword_r"));
+	RightWeapon->CanCharacterStepUpOn = ECanBeCharacterBase::ECB_No;
+	RightWeapon->SetCollisionProfileName(TEXT("NoCollision"));
+	RightWeapon->SetGenerateOverlapEvents(false);
+	RightWeapon->SetEnableGravity(false);
 
 	Speed = 266.66f;
 	bFightMode = bStartFight = bStrongMode = bEquiping = bUnequiping = false;
