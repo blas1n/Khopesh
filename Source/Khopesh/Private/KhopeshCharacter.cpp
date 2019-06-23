@@ -193,6 +193,8 @@ void AKhopeshCharacter::SetEquip(bool IsEquip)
 
 	LeftWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, LeftWeaponSocket);
 	RightWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, RightWeaponSocket);
+
+	CurrentSection = 0;
 }
 
 void AKhopeshCharacter::WalkMode()
