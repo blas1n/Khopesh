@@ -7,8 +7,6 @@
 #include "KhopeshAnimInstance.generated.h"
 
 DECLARE_DELEGATE(FOnAttack);
-DECLARE_DELEGATE(FOnNextCombo);
-DECLARE_DELEGATE(FOnEndCombo);
 DECLARE_DELEGATE_OneParam(FOnSetFightMode, bool);
 
 UENUM()
@@ -39,6 +37,9 @@ public:
 	void SetFightMode(bool IsFight);
 
 	void PlayMontage(EMontage Montage);
+	void PlayAttackMontage(EMontage Montage, uint8 Section);
+
+	FORCEINLINE bool IsPlayMontage() const { return bIsPlayMontage; }
 
 private:
 	UFUNCTION()
@@ -48,17 +49,16 @@ private:
 	void AnimNotify_Unequip();
 
 	UFUNCTION()
-	void AnimNotify_OnAttack();
+	void AnimNotify_Attack();
 
 	UFUNCTION()
-	void AnimNotify_OnNextAttack();
+	void AnimNotify_NextCombo();
 
-	FName GetAttackSection(uint8 Index);
+	UFUNCTION()
+	void AnimNotify_EndMotion();
 
 public:
 	FOnAttack OnAttack;
-	FOnNextCombo OnNextCombo;
-	FOnEndCombo OnEndCombo;
 	FOnSetFightMode OnSetFightMode;
 
 private:
@@ -110,4 +110,5 @@ private:
 	TMap<EMontage, UAnimMontage*> MontageMap;
 
 	FTimerHandle ComboTimer;
+	bool bIsPlayMontage;
 };

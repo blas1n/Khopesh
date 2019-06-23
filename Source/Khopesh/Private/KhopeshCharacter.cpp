@@ -12,6 +12,7 @@
 #include "KhopeshAnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "TimerManager.h"
+#include "DrawDebugHelpers.h"
 
 AKhopeshCharacter::AKhopeshCharacter()
 {
@@ -54,6 +55,7 @@ AKhopeshCharacter::AKhopeshCharacter()
 
 	Speed = 266.66f;
 	bFightMode = bStartFight = bStrongMode = bEquiping = bUnequiping = false;
+	CurrentSection = 0;
 }
 
 void AKhopeshCharacter::BeginPlay()
@@ -74,6 +76,8 @@ void AKhopeshCharacter::BeginPlay()
 			bStartFight = true;
 		}
 	});
+
+	Anim->OnAttack.BindUObject(this, &AKhopeshCharacter::OnAttack);
 }
 
 void AKhopeshCharacter::Tick(float DeltaSeconds)
@@ -115,8 +119,8 @@ void AKhopeshCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerI
 	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 
-	PlayerInputComponent->BindAction("Attack", IE_Pressed, this, &AKhopeshCharacter::OnAttack);
-	PlayerInputComponent->BindAction("Defense", IE_Pressed, this, &AKhopeshCharacter::OnDefense);
+	PlayerInputComponent->BindAction("Attack", IE_Pressed, this, &AKhopeshCharacter::Attack);
+	PlayerInputComponent->BindAction("Defense", IE_Pressed, this, &AKhopeshCharacter::Defense);
 
 	PlayerInputComponent->BindAction("Step", IE_Pressed, this, &AKhopeshCharacter::Step);
 
@@ -142,7 +146,7 @@ void AKhopeshCharacter::MoveRight(float Value)
 
 void AKhopeshCharacter::Step()
 {
-	if (!bStartFight || Anim->Montage_IsPlaying(nullptr) || GetCharacterMovement()->IsFalling())
+	if (!bStartFight || Anim->IsPlayMontage() || GetCharacterMovement()->IsFalling())
 		return;
 
 	float Horizontal = GetInputAxisValue(TEXT("MoveRight"));
@@ -160,14 +164,17 @@ void AKhopeshCharacter::Step()
 	Anim->PlayMontage(bFightMode ? EMontage::DODGE_EQUIP : EMontage::DODGE_UNEQUIP);
 }
 
-void AKhopeshCharacter::OnAttack()
+void AKhopeshCharacter::Attack()
 {
+	if (!bFightMode || Anim->IsPlayMontage()) return;
 
+	Anim->PlayAttackMontage(bStrongMode ? EMontage::ATTACK_STRONG : EMontage::ATTACK_WEAK, CurrentSection++);
+	CurrentSection %= MaxSection;
 }
 
-void AKhopeshCharacter::OnDefense()
+void AKhopeshCharacter::Defense()
 {
-	
+	bStrongMode = !bStrongMode;
 }
 
 void AKhopeshCharacter::Move(EAxis::Type Axis, float Value)
@@ -201,6 +208,51 @@ void AKhopeshCharacter::RunMode()
 	if (bStartFight)
 	{
 		Speed += 266.66f;
+	}
+}
+
+void AKhopeshCharacter::OnAttack()
+{
+	FCollisionObjectQueryParams CollisionObjectQueryParams(ECollisionChannel::ECC_Pawn);
+	FCollisionQueryParams CollisionQueryParams(NAME_None, false, this);
+
+	TArray<FHitResult> Out;
+
+	bool bResult = GetWorld()->SweepMultiByObjectType(
+		Out,
+		GetActorLocation(),
+		GetActorLocation() + GetActorForwardVector() * AttackRange,
+		FQuat::Identity,
+		CollisionObjectQueryParams,
+		FCollisionShape::MakeSphere(AttackRange),
+		CollisionQueryParams
+	);
+
+#if ENABLE_DRAW_DEBUG
+	FVector TraceVec = GetActorForwardVector() * AttackRange;
+	FVector Center = GetActorLocation() + TraceVec * 0.5f;
+	float HalfHeight = AttackRange * 0.5f + AttackRadius;
+	FQuat CapsuleRot = FRotationMatrix::MakeFromZ(TraceVec).ToQuat();
+	FColor DrawColor = bResult ? FColor::Green : FColor::Red;
+	float DebugLifeTime = 5.0f;
+
+	DrawDebugCapsule(GetWorld(),
+		Center,
+		HalfHeight,
+		AttackRadius,
+		CapsuleRot,
+		DrawColor,
+		false,
+		DebugLifeTime);
+#endif
+
+	for (const auto& Result : Out)
+	{
+		Result.GetActor()->TakeDamage(
+			bStrongMode ? StrongAttackDamage : WeakAttackDamage,
+			FDamageEvent(),
+			GetController(),
+			this);
 	}
 }
 

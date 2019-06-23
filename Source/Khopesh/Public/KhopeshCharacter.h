@@ -42,8 +42,8 @@ public:
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
 private:
-	void OnAttack();
-	void OnDefense();
+	void Attack();
+	void Defense();
 
 	void Move(EAxis::Type Axis, float Value);
 	void SetEquip(bool IsEquip);
@@ -51,6 +51,7 @@ private:
 	void WalkMode();
 	void RunMode();
 
+	void OnAttack();
 	bool IsEnemyNear();
 
 private:
@@ -60,6 +61,18 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Fight, Meta = (AllowPrivateAccess = true))
 	float InFightRange;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Fight, Meta = (AllowPrivateAccess = true))
+	float AttackRange;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Fight, Meta = (AllowPrivateAccess = true))
+	float AttackRadius;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Fight, Meta = (AllowPrivateAccess = true))
+	float WeakAttackDamage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Fight, Meta = (AllowPrivateAccess = true))
+	float StrongAttackDamage;
+
 	float Speed;
 
 	bool bFightMode;
@@ -67,5 +80,8 @@ private:
 	bool bStartFight;
 	bool bEquiping;
 	bool bUnequiping;
+
+	constexpr static uint8 MaxSection = 5;
+	uint8 CurrentSection;
 };
 

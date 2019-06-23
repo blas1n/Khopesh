@@ -10,6 +10,7 @@ UKhopeshAnimInstance::UKhopeshAnimInstance()
 	Speed = 0.0f;
 	IsInAir = false;
 	IsFightMode = false;
+	bIsPlayMontage = false;
 }
 
 void UKhopeshAnimInstance::NativeInitializeAnimation()
@@ -48,6 +49,15 @@ void UKhopeshAnimInstance::SetFightMode(bool IsFight)
 void UKhopeshAnimInstance::PlayMontage(EMontage Montage)
 {
 	Montage_Play(MontageMap[Montage]);
+	bIsPlayMontage = true;
+}
+
+void UKhopeshAnimInstance::PlayAttackMontage(EMontage Montage, uint8 Section)
+{
+	PlayMontage(Montage);
+	Montage_JumpToSection(MontageMap[Montage]->GetSectionName(Section));
+	
+	TryGetPawnOwner()->GetWorldTimerManager().ClearTimer(ComboTimer);
 }
 
 void UKhopeshAnimInstance::AnimNotify_Equip()
@@ -60,22 +70,22 @@ void UKhopeshAnimInstance::AnimNotify_Unequip()
 	OnSetFightMode.Execute(false);
 }
 
-void UKhopeshAnimInstance::AnimNotify_OnAttack()
+void UKhopeshAnimInstance::AnimNotify_Attack()
 {
 	OnAttack.Execute();
 }
 
-void UKhopeshAnimInstance::AnimNotify_OnNextAttack()
+void UKhopeshAnimInstance::AnimNotify_NextCombo()
 {
-	OnNextCombo.Execute();
+	bIsPlayMontage = false;
 
 	TryGetPawnOwner()->GetWorldTimerManager().SetTimer(ComboTimer, [this]()
 	{
-		OnEndCombo.Execute();
+		bIsPlayMontage = false;
 	}, ComboDelay, false);
 }
 
-FName UKhopeshAnimInstance::GetAttackSection(uint8 Index)
+void UKhopeshAnimInstance::AnimNotify_EndMotion()
 {
-	return FName(*FString::Printf(TEXT("Attack_%d"), Index));
+	bIsPlayMontage = false;
 }
