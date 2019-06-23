@@ -12,7 +12,6 @@
 #include "KhopeshAnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "TimerManager.h"
-#include "Weapon.h"
 
 AKhopeshCharacter::AKhopeshCharacter()
 {
