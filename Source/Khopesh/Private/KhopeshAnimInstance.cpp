@@ -81,7 +81,7 @@ void UKhopeshAnimInstance::AnimNotify_NextCombo()
 
 	TryGetPawnOwner()->GetWorldTimerManager().SetTimer(ComboTimer, [this]()
 	{
-		bIsPlayMontage = false;
+		OnEndCombo.Execute();
 	}, ComboDelay, false);
 }
 

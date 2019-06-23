@@ -7,6 +7,7 @@
 #include "KhopeshAnimInstance.generated.h"
 
 DECLARE_DELEGATE(FOnAttack);
+DECLARE_DELEGATE(FOnEndCombo);
 DECLARE_DELEGATE_OneParam(FOnSetFightMode, bool);
 
 UENUM()
@@ -59,6 +60,7 @@ private:
 
 public:
 	FOnAttack OnAttack;
+	FOnEndCombo OnEndCombo;
 	FOnSetFightMode OnSetFightMode;
 
 private:

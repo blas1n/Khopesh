@@ -79,6 +79,11 @@ void AKhopeshCharacter::BeginPlay()
 	});
 
 	Anim->OnAttack.BindUObject(this, &AKhopeshCharacter::OnAttack);
+
+	Anim->OnEndCombo.BindLambda([this]()
+	{
+		CurrentSection = 0;
+	});
 }
 
 void AKhopeshCharacter::Tick(float DeltaSeconds)
@@ -340,6 +345,10 @@ void AKhopeshCharacter::PlayEquip_Implementation(bool IsEquip)
 
 void AKhopeshCharacter::AttackImpl()
 {
+	FRotator NewRotation = GetActorRotation();
+	NewRotation.Yaw = GetBaseAimRotation().Yaw;
+	SetActorRotation(NewRotation);
+
 	Anim->PlayAttackMontage(bStrongMode ? EMontage::ATTACK_STRONG : EMontage::ATTACK_WEAK, CurrentSection++);
 	CurrentSection %= MaxSection;
 }
