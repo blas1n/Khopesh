@@ -210,6 +210,7 @@ void AKhopeshCharacter::Attack_Multicast_Implementation()
 
 void AKhopeshCharacter::Defense()
 {
+
 }
 
 void AKhopeshCharacter::Move(EAxis::Type Axis, float Value)
