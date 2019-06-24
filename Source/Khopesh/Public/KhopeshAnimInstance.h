@@ -8,7 +8,7 @@
 
 DECLARE_DELEGATE(FOnAttack);
 DECLARE_DELEGATE(FOnEndCombo);
-DECLARE_DELEGATE_OneParam(FOnSetFightMode, bool);
+DECLARE_DELEGATE_OneParam(FOnSetCombatMode, bool);
 
 UENUM()
 enum class EMontage : uint8
@@ -34,23 +34,25 @@ class KHOPESH_API UKhopeshAnimInstance : public UAnimInstance
 	GENERATED_BODY()
 	
 public:
+	// Constructor
 	UKhopeshAnimInstance();
-	virtual void NativeInitializeAnimation() override;
-	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
-	void SetFightMode(bool IsFight);
-
-	void PlayMontage(EMontage Montage);
-	void PlayAttackMontage(EMontage Montage, uint8 Section);
-
-	FORCEINLINE bool IsPlayMontage() const { return bIsPlayMontage; }
 
 private:
-	UFUNCTION()
-	void AnimNotify_Equip();
+	// Virtual Function
+	virtual void NativeBeginPlay() override;
+	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
-	UFUNCTION()
-	void AnimNotify_Unequip();
+public:
+	// Public Function
+	void PlayMontage(EMontage Montage);
+	void PlayAttackMontage(EMontage Montage, uint8 Section);
+	void SetCombatMode(bool IsCombat);
+	
+	// Getter
+	FORCEINLINE bool IsPlayMontage() const { return IsMontagePlay; }
 
+private:
+	// Animation Notify
 	UFUNCTION()
 	void AnimNotify_Attack();
 
@@ -58,14 +60,22 @@ private:
 	void AnimNotify_NextCombo();
 
 	UFUNCTION()
+	void AnimNotify_Equip();
+
+	UFUNCTION()
+	void AnimNotify_Unequip();
+
+	UFUNCTION()
 	void AnimNotify_EndMotion();
 
 public:
+	// Delegate
 	FOnAttack OnAttack;
 	FOnEndCombo OnEndCombo;
-	FOnSetFightMode OnSetFightMode;
+	FOnSetCombatMode OnSetCombatMode;
 
 private:
+	// Animations
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
 	UAnimMontage* AttackWeak;
 
@@ -105,6 +115,7 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
 	UAnimMontage* Die;
 
+	// Blueprint Property
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
 	float Speed;
 
@@ -112,13 +123,12 @@ private:
 	bool IsInAir;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
-	bool IsFightMode;
+	bool IsCombatMode;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attack, Meta = (AllowPrivateAccess = true))
-	float ComboDelay;
-
+	// Other Variable
 	TMap<EMontage, UAnimMontage*> MontageMap;
 
 	FTimerHandle ComboTimer;
-	bool bIsPlayMontage;
+	bool IsMontagePlay;
+	float ComboDelay;
 };

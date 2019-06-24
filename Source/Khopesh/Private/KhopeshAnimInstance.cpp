@@ -2,18 +2,19 @@
 
 #include "KhopeshAnimInstance.h"
 #include "KhopeshCharacter.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "TimerManager.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 UKhopeshAnimInstance::UKhopeshAnimInstance()
 {
 	Speed = 0.0f;
 	IsInAir = false;
-	IsFightMode = false;
-	bIsPlayMontage = false;
+	IsCombatMode = false;
+	IsMontagePlay = false;
+	ComboDelay = 0.0f;
 }
 
-void UKhopeshAnimInstance::NativeInitializeAnimation()
+void UKhopeshAnimInstance::NativeBeginPlay()
 {
 	Super::NativeInitializeAnimation();
 
@@ -30,6 +31,8 @@ void UKhopeshAnimInstance::NativeInitializeAnimation()
 	MontageMap.Emplace(EMontage::EQUIP, Equip);
 	MontageMap.Emplace(EMontage::UNEQUIP, Unequip);
 	MontageMap.Emplace(EMontage::DIE, Die);
+
+	ComboDelay = Cast<AKhopeshCharacter>(TryGetPawnOwner())->GetComboDelay();
 }
 
 void UKhopeshAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -43,15 +46,10 @@ void UKhopeshAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	IsInAir = Owner->GetCharacterMovement()->IsFalling();
 }
 
-void UKhopeshAnimInstance::SetFightMode(bool IsFight)
-{
-	IsFightMode = IsFight;
-}
-
 void UKhopeshAnimInstance::PlayMontage(EMontage Montage)
 {
 	Montage_Play(MontageMap[Montage]);
-	bIsPlayMontage = true;
+	IsMontagePlay = true;
 }
 
 void UKhopeshAnimInstance::PlayAttackMontage(EMontage Montage, uint8 Section)
@@ -62,14 +60,9 @@ void UKhopeshAnimInstance::PlayAttackMontage(EMontage Montage, uint8 Section)
 	TryGetPawnOwner()->GetWorldTimerManager().ClearTimer(ComboTimer);
 }
 
-void UKhopeshAnimInstance::AnimNotify_Equip()
+void UKhopeshAnimInstance::SetCombatMode(bool IsCombat)
 {
-	OnSetFightMode.Execute(true);
-}
-
-void UKhopeshAnimInstance::AnimNotify_Unequip()
-{
-	OnSetFightMode.Execute(false);
+	IsCombatMode = IsCombat;
 }
 
 void UKhopeshAnimInstance::AnimNotify_Attack()
@@ -79,7 +72,7 @@ void UKhopeshAnimInstance::AnimNotify_Attack()
 
 void UKhopeshAnimInstance::AnimNotify_NextCombo()
 {
-	bIsPlayMontage = false;
+	IsMontagePlay = false;
 
 	TryGetPawnOwner()->GetWorldTimerManager().SetTimer(ComboTimer, [this]()
 	{
@@ -87,7 +80,17 @@ void UKhopeshAnimInstance::AnimNotify_NextCombo()
 	}, ComboDelay, false);
 }
 
+void UKhopeshAnimInstance::AnimNotify_Equip()
+{
+	OnSetCombatMode.Execute(true);
+}
+
+void UKhopeshAnimInstance::AnimNotify_Unequip()
+{
+	OnSetCombatMode.Execute(false);
+}
+
 void UKhopeshAnimInstance::AnimNotify_EndMotion()
 {
-	bIsPlayMontage = false;
+	IsMontagePlay = false;
 }

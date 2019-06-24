@@ -12,6 +12,7 @@ class AKhopeshCharacter : public ACharacter
 	GENERATED_BODY()
 
 private:
+	// Components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = true))
 	class USpringArmComponent* CameraBoom;
 
@@ -25,127 +26,147 @@ private:
 	class UStaticMeshComponent* RightWeapon;
 
 public:
+	// Constructor
 	AKhopeshCharacter();
 
 private:
-	void MoveForward(float Value);
-	void MoveRight(float Value);
-
-	void Step();
-
-	UFUNCTION(Server, Reliable, WithValidation)
-	void Step_Server(FRotator NewRotation);
-
-	void Step_Server_Implementation(FRotator NewRotation);
-	bool Step_Server_Validate(FRotator NewRotation);
-
-	UFUNCTION(NetMulticast, Reliable)
-	void Step_Multicast(FRotator NewRotation);
-
-	void Step_Multicast_Implementation(FRotator NewRotation);
-
-private:
+	// Virtual Function
 	virtual void BeginPlay() override;
 	virtual void Tick(float DelatSeconds) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
-public:
-	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
-	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+	// Binding Function (Excluding dash bind function because it include RPC)
+	void MoveForward(float Value);
+	void MoveRight(float Value);
 
-private:
 	void Attack();
-
-	UFUNCTION(Server, Reliable, WithValidation)
-	void Attack_Server();
-
-	void Attack_Server_Implementation();
-	bool Attack_Server_Validate();
-
-	UFUNCTION(NetMulticast, Reliable)
-	void Attack_Multicast();
-
-	void Attack_Multicast_Implementation();
-
 	void Defense();
-
-	void Move(EAxis::Type Axis, float Value);
-	void SetEquip(bool IsEquip);
-
-	UFUNCTION(Server, Reliable, WithValidation)
-	void WalkMode();
-
-	void WalkMode_Implementation();
-	bool WalkMode_Validate();
-
-	UFUNCTION(Server, Reliable, WithValidation)
-	void RunMode();
-
-	void RunMode_Implementation();
-	bool RunMode_Validate();
+	void Step();
 
 	void OnAttack();
 
-	bool IsEnemyNear() const;
-
-	FRotator GetRotatorByInputKey() const;
-	EMontage GetHitMontageByDir(float Dir) const;
+	// RPC Function Declaration
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Attack_Server(FRotator NewRotation);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void PlayEquip(bool IsEquip);
+	void Attack_Multicast(FRotator NewRotation);
 
-	void PlayEquip_Implementation(bool IsEquip);
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ApplyDamage(AActor* DamagedActor);
 
 	UFUNCTION(NetMulticast, Reliable)
 	void Damage_Multicast(EMontage HitMontage);
 
-	void Damage_Multicast_Implementation(EMontage HitMontage);
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Step_Server(FRotator NewRotation);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Step_Multicast(FRotator NewRotation);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void PlayEquipMontage(bool IsEquip);
 
 	UFUNCTION(Server, Reliable, WithValidation)
-	void RequestDamage(AActor* DamagedActor);
+	void WalkMode();
 
-	void RequestDamage_Implementation(AActor* DamagedActor);
-	bool RequestDamage_Validate(AActor* DamagedActor);
+	UFUNCTION(Server, Reliable, WithValidation)
+	void RunMode();
 
-	void AttackImpl();
+	// RPC Function Implementation
+	void Attack_Server_Implementation(FRotator NewRotation);
+	bool Attack_Server_Validate(FRotator NewRotation);
+
+	void Attack_Multicast_Implementation(FRotator NewRotation);
+
+	void ApplyDamage_Implementation(AActor* DamagedActor);
+	bool ApplyDamage_Validate(AActor* DamagedActor);
+
+	void Damage_Multicast_Implementation(EMontage HitMontage);
+
+	void Step_Server_Implementation(FRotator NewRotation);
+	bool Step_Server_Validate(FRotator NewRotation);
+
+	void Step_Multicast_Implementation(FRotator NewRotation);
+
+	void PlayEquipMontage_Implementation(bool IsEquip);
+
+	void WalkMode_Implementation();
+	bool WalkMode_Validate();
+
+	void RunMode_Implementation();
+	bool RunMode_Validate();
+
+	// RPC Function's Implement Function
+	void AttackImpl(const FRotator& NewRotation);
 	void StepImpl(const FRotator& NewRotation);
 
+	// Other Function
+	void Move(EAxis::Type Axis, float Value);
+	void PlayEquip(bool IsEquip);
+	void SetEquip(bool IsEquip);
+
+	bool IsEnemyNear() const;
+
+	FRotator GetRotationByAim() const;
+	FRotator GetRotationByInputKey() const;
+	EMontage GetHitMontageByDir(float Dir) const;
+
+public:
+	// Getters
+	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
+	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+	FORCEINLINE float GetComboDelay() const { return ComboDelay; }
+
 private:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, Meta = (AllowPrivateAccess = true))
-	class UKhopeshAnimInstance* Anim;
+	// Blueprint Property
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Replicated, Meta = (AllowPrivateAccess = true))
+	uint8 HP;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Fight, Meta = (AllowPrivateAccess = true))
-	float InFightRange;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
+	float CombatSwapRange;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Fight, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
 	float AttackRange;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Fight, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
 	float AttackRadius;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Fight, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
 	float WeakAttackDamage;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Fight, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
 	float StrongAttackDamage;
 
-	constexpr static float IncreaseSpeed = 211.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
+	uint8 MaxCombo;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
+	float ComboDelay;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
+	float IncreaseSpeed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
+	float SpeedRate;
+
+	// Replicated Property (HP exclude here. Because it include Blueprint Property.)
 	UPROPERTY(Replicated)
 	float Speed;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Fight, Replicated, Meta = (AllowPrivateAccess = true))
-	uint8 HP;
+	// Animation Instance
+	class UKhopeshAnimInstance* Anim;
 
-	bool bFightMode;
-	bool bStrongMode;
-	bool bStartFight;
-	bool bEquiping;
-	bool bUnequiping;
+	// Other Variable
+	uint8 CurrentCombo;
 
-	constexpr static uint8 MaxSection = 5;
-	uint8 CurrentSection;
+	// Flag Variable
+	bool IsCombatMode;
+	bool IsStrongMode;
+	bool IsStartCombat;
+	bool IsEquipingNow;
+	bool IsUnequipingNow;
 };
 
