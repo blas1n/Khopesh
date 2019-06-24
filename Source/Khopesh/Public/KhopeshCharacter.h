@@ -70,10 +70,7 @@ private:
 	void PlayEquipMontage(bool IsEquip);
 
 	UFUNCTION(Server, Reliable, WithValidation)
-	void WalkMode();
-
-	UFUNCTION(Server, Reliable, WithValidation)
-	void RunMode();
+	void SetMoveMode(int32 MoveMode);
 
 	// RPC Function Implementation
 	void Attack_Server_Implementation(FRotator NewRotation);
@@ -93,11 +90,8 @@ private:
 
 	void PlayEquipMontage_Implementation(bool IsEquip);
 
-	void WalkMode_Implementation();
-	bool WalkMode_Validate();
-
-	void RunMode_Implementation();
-	bool RunMode_Validate();
+	void SetMoveMode_Implementation(int32 MoveMode);
+	bool SetMoveMode_Validate(int32 MoveMode);
 
 	// RPC Function's Implement Function
 	void AttackImpl(const FRotator& NewRotation);
@@ -121,6 +115,10 @@ public:
 	FORCEINLINE float GetComboDelay() const { return ComboDelay; }
 
 private:
+	// Animation Instance
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, Meta = (AllowPrivateAccess = true))
+	class UKhopeshAnimInstance* Anim;
+
 	// Blueprint Property
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Replicated, Meta = (AllowPrivateAccess = true))
 	uint8 HP;
@@ -141,6 +139,9 @@ private:
 	float StrongAttackDamage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
+	uint8 CurrentCombo;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
 	uint8 MaxCombo;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
@@ -155,12 +156,6 @@ private:
 	// Replicated Property (HP exclude here. Because it include Blueprint Property.)
 	UPROPERTY(Replicated)
 	float Speed;
-
-	// Animation Instance
-	class UKhopeshAnimInstance* Anim;
-
-	// Other Variable
-	uint8 CurrentCombo;
 
 	// Flag Variable
 	bool IsCombatMode;

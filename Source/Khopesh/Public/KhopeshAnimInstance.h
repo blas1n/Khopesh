@@ -6,9 +6,9 @@
 #include "Animation/AnimInstance.h"
 #include "KhopeshAnimInstance.generated.h"
 
-DECLARE_DELEGATE(FOnAttack);
-DECLARE_DELEGATE(FOnEndCombo);
-DECLARE_DELEGATE_OneParam(FOnSetCombatMode, bool);
+DECLARE_DELEGATE(FOnAttack)
+DECLARE_DELEGATE(FOnEndCombo)
+DECLARE_DELEGATE_OneParam(FOnSetCombatMode, bool)
 
 UENUM()
 enum class EMontage : uint8

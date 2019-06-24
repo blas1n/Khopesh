@@ -12,6 +12,8 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Controller.h"
 
+DECLARE_DELEGATE_OneParam(FSetMoveMode, int32)
+
 AKhopeshCharacter::AKhopeshCharacter()
 {
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -129,18 +131,16 @@ void AKhopeshCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 	PlayerInputComponent->BindAction("Attack", IE_Pressed, this, &AKhopeshCharacter::Attack);
 	PlayerInputComponent->BindAction("Defense", IE_Pressed, this, &AKhopeshCharacter::Defense);
-
 	PlayerInputComponent->BindAction("Step", IE_Pressed, this, &AKhopeshCharacter::Step);
 
-	PlayerInputComponent->BindAction("Dash", IE_Pressed, this, &AKhopeshCharacter::RunMode);
-	PlayerInputComponent->BindAction("Dash", IE_Released, this, &AKhopeshCharacter::WalkMode);
+	PlayerInputComponent->BindAction<FSetMoveMode>("Dash", IE_Pressed, this, &AKhopeshCharacter::SetMoveMode, 1);
+	PlayerInputComponent->BindAction<FSetMoveMode>("Dash", IE_Released, this, &AKhopeshCharacter::SetMoveMode, -1);
 }
 
 float AKhopeshCharacter::TakeDamage(
 	float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	float FinalDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-
 	HP = FMath::Clamp<uint8>(HP - FinalDamage, 0, 100);
 
 	if (HP == 0)
@@ -278,30 +278,17 @@ void AKhopeshCharacter::PlayEquipMontage_Implementation(bool IsEquip)
 	Anim->PlayMontage(IsEquip ? EMontage::EQUIP : EMontage::UNEQUIP);
 }
 
-void AKhopeshCharacter::WalkMode_Implementation()
+void AKhopeshCharacter::SetMoveMode_Implementation(int32 MoveMode)
 {
 	if (IsStartCombat)
 	{
-		Speed -= IncreaseSpeed;
+		Speed += IncreaseSpeed * MoveMode;
 	}
 }
 
-bool AKhopeshCharacter::WalkMode_Validate()
+bool AKhopeshCharacter::SetMoveMode_Validate(int32 MoveMode)
 {
-	return true;
-}
-
-void AKhopeshCharacter::RunMode_Implementation()
-{
-	if (IsStartCombat)
-	{
-		Speed += IncreaseSpeed;
-	}
-}
-
-bool AKhopeshCharacter::RunMode_Validate()
-{
-	return true;
+	return MoveMode == 1 || MoveMode == -1;
 }
 
 void AKhopeshCharacter::AttackImpl(const FRotator& NewRotation)
