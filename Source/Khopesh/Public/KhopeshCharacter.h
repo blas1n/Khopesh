@@ -49,6 +49,7 @@ private:
 	virtual void Tick(float DelatSeconds) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
@@ -87,11 +88,6 @@ private:
 
 	void OnAttack();
 
-	UFUNCTION(Client, Reliable)
-	void AttackCheck();
-
-	void AttackCheck_Implementation();
-
 	bool IsEnemyNear() const;
 
 	FRotator GetRotatorByInputKey() const;
@@ -101,12 +97,29 @@ private:
 
 	void PlayEquip_Implementation(bool IsEquip);
 
+	UFUNCTION(NetMulticast, Reliable)
+	void Damage_Multicast(bool IsStrongMode);
+
+	void Damage_Multicast_Implementation(bool IsStrongMode);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void RequestDamage(AActor* DamagedActor);
+
+	void RequestDamage_Implementation(AActor* DamagedActor);
+	bool RequestDamage_Validate(AActor* DamagedActor);
+
 	void AttackImpl();
 	void StepImpl(const FRotator& NewRotation);
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, Meta = (AllowPrivateAccess = true))
 	class UKhopeshAnimInstance* Anim;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Damage, Meta = (AllowPrivateAccess = true))
+	TSubclassOf<class UDamageType> WeakDamageType;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Damage, Meta = (AllowPrivateAccess = true))
+	TSubclassOf<class UDamageType> StrongDamageType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Fight, Meta = (AllowPrivateAccess = true))
 	float InFightRange;
@@ -127,6 +140,9 @@ private:
 
 	UPROPERTY(Replicated)
 	float Speed;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Fight, Replicated, Meta = (AllowPrivateAccess = true))
+	uint8 HP;
 
 	bool bFightMode;
 	bool bStrongMode;

@@ -13,7 +13,11 @@
 #include "Animation/AnimMontage.h"
 #include "UnrealNetwork.h"
 #include "TimerManager.h"
+#include "GameFramework/DamageType.h"
+#include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
+
+#define GETENUMSTRING(etype, evalue) ( (FindObject<UEnum>(ANY_PACKAGE, TEXT(etype), true) != nullptr) ? FindObject<UEnum>(ANY_PACKAGE, TEXT(etype), true)->GetEnumName((int32)evalue) : FString("Invalid - are you sure enum uses UENUM() macro?") )
 
 AKhopeshCharacter::AKhopeshCharacter()
 {
@@ -57,6 +61,8 @@ AKhopeshCharacter::AKhopeshCharacter()
 	Speed = IncreaseSpeed;
 	bFightMode = bStartFight = bStrongMode = bEquiping = bUnequiping = false;
 	CurrentSection = 0;
+
+	HP = 100;
 }
 
 void AKhopeshCharacter::BeginPlay()
@@ -122,6 +128,7 @@ void AKhopeshCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AKhopeshCharacter, Speed);
+	DOREPLIFETIME(AKhopeshCharacter, HP);
 }
 
 void AKhopeshCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -141,6 +148,23 @@ void AKhopeshCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerI
 
 	PlayerInputComponent->BindAction("Dash", IE_Pressed, this, &AKhopeshCharacter::RunMode);
 	PlayerInputComponent->BindAction("Dash", IE_Released, this, &AKhopeshCharacter::WalkMode);
+}
+
+float AKhopeshCharacter::TakeDamage(
+	float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	float FinalDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	HP = FMath::Clamp<uint8>(HP - FinalDamage, 0, 100);
+
+	if (HP == 0)
+	{
+		Destroy();
+		return FinalDamage;
+	}
+
+	Damage_Multicast(*DamageEvent.DamageTypeClass == *StrongDamageType);
+	return FinalDamage;
 }
 
 void AKhopeshCharacter::MoveForward(float Value)
@@ -181,7 +205,7 @@ bool AKhopeshCharacter::Step_Server_Validate(FRotator NewRotation)
 
 void AKhopeshCharacter::Step_Multicast_Implementation(FRotator NewRotation)
 {
-	if (Role != ROLE_AutonomousProxy)
+	if (!IsLocallyControlled())
 	{
 		StepImpl(NewRotation);
 	}
@@ -207,7 +231,7 @@ bool AKhopeshCharacter::Attack_Server_Validate()
 
 void AKhopeshCharacter::Attack_Multicast_Implementation()
 {
-	if (Role != ROLE_AutonomousProxy)
+	if (!IsLocallyControlled())
 	{
 		AttackImpl();
 	}
@@ -266,48 +290,24 @@ bool AKhopeshCharacter::RunMode_Validate()
 
 void AKhopeshCharacter::OnAttack()
 {
-	AttackCheck();
-}
+	if (!IsLocallyControlled()) return;
 
-void AKhopeshCharacter::AttackCheck_Implementation()
-{
-	TArray<FHitResult> Out;
-
-	bool bResult = GetWorld()->SweepMultiByObjectType(
+	FHitResult Out;
+	
+	GetWorld()->SweepSingleByObjectType(
 		Out,
 		GetActorLocation(),
 		GetActorLocation() + GetActorForwardVector() * AttackRange,
 		FQuat::Identity,
-		FCollisionObjectQueryParams(ECollisionChannel::ECC_Pawn),
-		FCollisionShape::MakeSphere(AttackRange),
+		ECollisionChannel::ECC_Pawn,
+		FCollisionShape::MakeSphere(AttackRadius),
 		FCollisionQueryParams(NAME_None, false, this)
 	);
 
-#if ENABLE_DRAW_DEBUG
-	FVector TraceVec = GetActorForwardVector() * AttackRange;
-	FVector Center = GetActorLocation() + TraceVec * 0.5f;
-	float HalfHeight = AttackRange * 0.5f + AttackRadius;
-	FQuat CapsuleRot = FRotationMatrix::MakeFromZ(TraceVec).ToQuat();
-	FColor DrawColor = bResult ? FColor::Green : FColor::Red;
-	float DebugLifeTime = 5.0f;
-
-	DrawDebugCapsule(GetWorld(),
-		Center,
-		HalfHeight,
-		AttackRadius,
-		CapsuleRot,
-		DrawColor,
-		false,
-		DebugLifeTime);
-#endif
-
-	for (const auto& Result : Out)
+	if (Out.bBlockingHit)
 	{
-		Result.GetActor()->TakeDamage(
-			bStrongMode ? StrongAttackDamage : WeakAttackDamage,
-			FDamageEvent(),
-			GetController(),
-			this);
+		RequestDamage(Out.GetActor());
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *Out.Actor->GetName());
 	}
 }
 
@@ -341,6 +341,31 @@ FRotator AKhopeshCharacter::GetRotatorByInputKey() const
 void AKhopeshCharacter::PlayEquip_Implementation(bool IsEquip)
 {
 	Anim->PlayMontage(IsEquip ? EMontage::EQUIP : EMontage::UNEQUIP);
+}
+
+void AKhopeshCharacter::Damage_Multicast_Implementation(bool IsStrongMode)
+{
+	Anim->PlayMontage(IsStrongMode ? EMontage::HIT_STRONG : EMontage::HIT_WEAK);
+}
+
+void AKhopeshCharacter::RequestDamage_Implementation(AActor* DamagedActor)
+{
+	FHitResult Hit(GetActorLocation(), DamagedActor->GetActorLocation());
+
+	UGameplayStatics::ApplyPointDamage(
+		DamagedActor,
+		bStrongMode ? StrongAttackDamage : WeakAttackDamage,
+		Hit.TraceStart - Hit.TraceEnd,
+		Hit,
+		GetController(),
+		this,
+		bStrongMode ? *StrongDamageType : *WeakDamageType
+	);
+}
+
+bool AKhopeshCharacter::RequestDamage_Validate(AActor* DamagedActor)
+{
+	return DamagedActor != nullptr;
 }
 
 void AKhopeshCharacter::AttackImpl()
