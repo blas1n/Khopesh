@@ -17,8 +17,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
 
-#define GETENUMSTRING(etype, evalue) ( (FindObject<UEnum>(ANY_PACKAGE, TEXT(etype), true) != nullptr) ? FindObject<UEnum>(ANY_PACKAGE, TEXT(etype), true)->GetEnumName((int32)evalue) : FString("Invalid - are you sure enum uses UENUM() macro?") )
-
 AKhopeshCharacter::AKhopeshCharacter()
 {
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -163,7 +161,8 @@ float AKhopeshCharacter::TakeDamage(
 		return FinalDamage;
 	}
 
-	Damage_Multicast(*DamageEvent.DamageTypeClass == *StrongDamageType);
+	float HitDir = DamageCauser->GetActorRotation().Yaw;
+	Damage_Multicast(GetHitMontageByDir(HitDir > 180.0f ? HitDir - 360.0f : HitDir));
 	return FinalDamage;
 }
 
@@ -307,14 +306,11 @@ void AKhopeshCharacter::OnAttack()
 	if (Out.bBlockingHit)
 	{
 		RequestDamage(Out.GetActor());
-		UE_LOG(LogTemp, Warning, TEXT("%s"), *Out.Actor->GetName());
 	}
 }
 
 bool AKhopeshCharacter::IsEnemyNear() const
 {
-	DrawDebugSphere(GetWorld(), GetActorLocation(), InFightRange, 32, FColor::Black);
-
 	return GetWorld()->OverlapAnyTestByObjectType(
 		GetActorLocation(),
 		FQuat::Identity,
@@ -338,29 +334,40 @@ FRotator AKhopeshCharacter::GetRotatorByInputKey() const
 	return FRotator(0.0f, GetControlRotation().Yaw + CharacterRot, 0.0f);
 }
 
+EMontage AKhopeshCharacter::GetHitMontageByDir(float Dir) const
+{
+	EMontage Montage = (Dir > 0.0f ? EMontage::HIT_RIGHT : EMontage::HIT_LEFT);
+
+	if (FMath::Abs(Dir) <= 45.0f)
+	{
+		Montage = EMontage::HIT_FRONT;
+	}
+
+	else if (FMath::Abs(Dir) >= 135.0f)
+	{
+		Montage = EMontage::HIT_BACK;
+	}
+
+	return Montage;
+}
+
 void AKhopeshCharacter::PlayEquip_Implementation(bool IsEquip)
 {
 	Anim->PlayMontage(IsEquip ? EMontage::EQUIP : EMontage::UNEQUIP);
 }
 
-void AKhopeshCharacter::Damage_Multicast_Implementation(bool IsStrongMode)
+void AKhopeshCharacter::Damage_Multicast_Implementation(EMontage HitMontage)
 {
-	Anim->PlayMontage(IsStrongMode ? EMontage::HIT_STRONG : EMontage::HIT_WEAK);
+	Anim->PlayMontage(HitMontage);
 }
 
 void AKhopeshCharacter::RequestDamage_Implementation(AActor* DamagedActor)
 {
-	FHitResult Hit(GetActorLocation(), DamagedActor->GetActorLocation());
-
-	UGameplayStatics::ApplyPointDamage(
-		DamagedActor,
+	DamagedActor->TakeDamage(
 		bStrongMode ? StrongAttackDamage : WeakAttackDamage,
-		Hit.TraceStart - Hit.TraceEnd,
-		Hit,
+		FDamageEvent(),
 		GetController(),
-		this,
-		bStrongMode ? *StrongDamageType : *WeakDamageType
-	);
+		this);
 }
 
 bool AKhopeshCharacter::RequestDamage_Validate(AActor* DamagedActor)

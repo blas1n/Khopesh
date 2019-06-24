@@ -18,8 +18,10 @@ enum class EMontage : uint8
 	DODGE_EQUIP UMETA(DisplayName = "Dodge Equip"),
 	DODGE_UNEQUIP UMETA(DisplayName = "Dodge Unequip"),
 	DEFENSE UMETA(DisplayName = "Defense"),
-	HIT_WEAK UMETA(DisplayName = "Hit Weak"),
-	HIT_STRONG UMETA(DisplayName = "Hit Strong"),
+	HIT_FRONT UMETA(DisplayName = "Hit Front"),
+	HIT_LEFT UMETA(DisplayName = "Hit Left"),
+	HIT_BACK UMETA(DisplayName = "Hit Back"),
+	HIT_RIGHT UMETA(DisplayName = "Hit Right"),
 	BROKEN UMETA(DisplayName = "Broken"),
 	EQUIP UMETA(DisplayName = "Equip"),
 	UNEQUIP UMETA(DisplayName = "Unequip"),
@@ -80,10 +82,16 @@ private:
 	UAnimMontage* Defense;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
-	UAnimMontage* HitWeak;
+	UAnimMontage* HitFront;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
-	UAnimMontage* HitStrong;
+	UAnimMontage* HitLeft;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* HitBack;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* HitRight;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
 	UAnimMontage* Broken;

@@ -22,8 +22,10 @@ void UKhopeshAnimInstance::NativeInitializeAnimation()
 	MontageMap.Emplace(EMontage::DODGE_EQUIP, DodgeEquip);
 	MontageMap.Emplace(EMontage::DODGE_UNEQUIP, DodgeUnequip);
 	MontageMap.Emplace(EMontage::DEFENSE, Defense);
-	MontageMap.Emplace(EMontage::HIT_WEAK, HitWeak);
-	MontageMap.Emplace(EMontage::HIT_STRONG, HitStrong);
+	MontageMap.Emplace(EMontage::HIT_FRONT, HitFront);
+	MontageMap.Emplace(EMontage::HIT_LEFT, HitLeft);
+	MontageMap.Emplace(EMontage::HIT_BACK, HitBack);
+	MontageMap.Emplace(EMontage::HIT_RIGHT, HitRight);
 	MontageMap.Emplace(EMontage::BROKEN, Broken);
 	MontageMap.Emplace(EMontage::EQUIP, Equip);
 	MontageMap.Emplace(EMontage::UNEQUIP, Unequip);

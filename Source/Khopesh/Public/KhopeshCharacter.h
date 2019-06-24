@@ -91,6 +91,7 @@ private:
 	bool IsEnemyNear() const;
 
 	FRotator GetRotatorByInputKey() const;
+	EMontage GetHitMontageByDir(float Dir) const;
 
 	UFUNCTION(NetMulticast, Reliable)
 	void PlayEquip(bool IsEquip);
@@ -98,9 +99,9 @@ private:
 	void PlayEquip_Implementation(bool IsEquip);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void Damage_Multicast(bool IsStrongMode);
+	void Damage_Multicast(EMontage HitMontage);
 
-	void Damage_Multicast_Implementation(bool IsStrongMode);
+	void Damage_Multicast_Implementation(EMontage HitMontage);
 
 	UFUNCTION(Server, Reliable, WithValidation)
 	void RequestDamage(AActor* DamagedActor);
@@ -114,12 +115,6 @@ private:
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Animation, Meta = (AllowPrivateAccess = true))
 	class UKhopeshAnimInstance* Anim;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Damage, Meta = (AllowPrivateAccess = true))
-	TSubclassOf<class UDamageType> WeakDamageType;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Damage, Meta = (AllowPrivateAccess = true))
-	TSubclassOf<class UDamageType> StrongDamageType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Fight, Meta = (AllowPrivateAccess = true))
 	float InFightRange;
