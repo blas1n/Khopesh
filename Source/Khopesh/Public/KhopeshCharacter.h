@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "KhopeshCharacter.generated.h"
 
+enum class EMontage : uint8;
+
 UCLASS(config=Game)
 class AKhopeshCharacter : public ACharacter
 {
@@ -41,69 +43,69 @@ private:
 	void MoveForward(float Value);
 	void MoveRight(float Value);
 
+	UFUNCTION(BlueprintCallable)
 	void Attack();
 	void Defense();
 	void Step();
 
 	void OnAttack();
+	void SetCombat(bool IsEquip);
 
 	// RPC Function Declaration
 	UFUNCTION(Server, Reliable, WithValidation)
-	void Attack_Server(FRotator NewRotation);
+	void Attack_Request(FRotator NewRotation);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void Attack_Multicast(FRotator NewRotation);
+	void Attack_Response(FRotator NewRotation);
 
 	UFUNCTION(Server, Reliable, WithValidation)
-	void ApplyDamage(AActor* DamagedActor);
+	void Defense_Request(FRotator NewRotation);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void Damage_Multicast(EMontage HitMontage);
+	void Defense_Response(FRotator NewRotation);
 
 	UFUNCTION(Server, Reliable, WithValidation)
-	void Step_Server(FRotator NewRotation);
+	void Step_Request(FRotator NewRotation);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void Step_Multicast(FRotator NewRotation);
+	void Step_Response(FRotator NewRotation);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void PlayEquipMontage(bool IsEquip);
+	void PlayHitMontage(float Direction);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void PlayEquip(bool IsEquip);
 
 	UFUNCTION(Server, Reliable, WithValidation)
 	void SetMoveMode(int32 MoveMode);
 
 	// RPC Function Implementation
-	void Attack_Server_Implementation(FRotator NewRotation);
-	bool Attack_Server_Validate(FRotator NewRotation);
+	void Attack_Request_Implementation(FRotator NewRotation);
+	bool Attack_Request_Validate(FRotator NewRotation);
+	void Attack_Response_Implementation(FRotator NewRotation);
 
-	void Attack_Multicast_Implementation(FRotator NewRotation);
+	void Defense_Request_Implementation(FRotator NewRotation);
+	bool Defense_Request_Validate(FRotator NewRotation);
+	void Defense_Response_Implementation(FRotator NewRotation);
 
-	void ApplyDamage_Implementation(AActor* DamagedActor);
-	bool ApplyDamage_Validate(AActor* DamagedActor);
+	void Step_Request_Implementation(FRotator NewRotation);
+	bool Step_Request_Validate(FRotator NewRotation);
+	void Step_Response_Implementation(FRotator NewRotation);
 
-	void Damage_Multicast_Implementation(EMontage HitMontage);
-
-	void Step_Server_Implementation(FRotator NewRotation);
-	bool Step_Server_Validate(FRotator NewRotation);
-
-	void Step_Multicast_Implementation(FRotator NewRotation);
-
-	void PlayEquipMontage_Implementation(bool IsEquip);
+	void PlayHitMontage_Implementation(float Direction);
+	void PlayEquip_Implementation(bool IsEquip);
 
 	void SetMoveMode_Implementation(int32 MoveMode);
 	bool SetMoveMode_Validate(int32 MoveMode);
 
 	// RPC Function's Implement Function
 	void AttackImpl(const FRotator& NewRotation);
+	void DefenseImpl(const FRotator& NewRotation);
 	void StepImpl(const FRotator& NewRotation);
 
 	// Other Function
 	void Move(EAxis::Type Axis, float Value);
-	void PlayEquip(bool IsEquip);
-	void SetEquip(bool IsEquip);
-
 	bool IsEnemyNear() const;
-
 	FRotator GetRotationByAim() const;
 	FRotator GetRotationByInputKey() const;
 	EMontage GetHitMontageByDir(float Dir) const;
@@ -133,10 +135,7 @@ private:
 	float AttackRadius;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
-	float WeakAttackDamage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
-	float StrongAttackDamage;
+	float AttackDamage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
 	uint8 CurrentCombo;
@@ -161,7 +160,6 @@ private:
 	bool IsCombatMode;
 	bool IsStrongMode;
 	bool IsStartCombat;
-	bool IsEquipingNow;
-	bool IsUnequipingNow;
+	bool IsDefensing;
 };
 

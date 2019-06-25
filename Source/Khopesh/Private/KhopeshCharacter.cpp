@@ -3,6 +3,7 @@
 #include "KhopeshCharacter.h"
 #include "KhopeshAnimInstance.h"
 #include "UnrealNetwork.h"
+#include "TimerManager.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -51,9 +52,6 @@ AKhopeshCharacter::AKhopeshCharacter()
 	RightWeapon->SetCollisionProfileName(TEXT("NoCollision"));
 	RightWeapon->SetGenerateOverlapEvents(false);
 	RightWeapon->SetEnableGravity(false);
-
-	IsCombatMode = IsStartCombat = IsStrongMode = IsEquipingNow = IsUnequipingNow = false;
-	HP = SpeedRate = ComboDelay = CurrentCombo = 0;
 }
 
 void AKhopeshCharacter::BeginPlay()
@@ -62,21 +60,8 @@ void AKhopeshCharacter::BeginPlay()
 
 	Anim = Cast<UKhopeshAnimInstance>(GetMesh()->GetAnimInstance());
 
-	Anim->OnSetCombatMode.BindLambda([this](bool IsCombat)
-	{
-		Anim->SetCombatMode(IsCombat);
-		SetEquip(IsCombat);
-		IsCombatMode = IsCombat;
-	
-		if (IsCombat && !IsStartCombat)
-		{
-			Speed += IncreaseSpeed;
-			IsStartCombat = true;
-		}
-	});
-
+	Anim->OnSetCombatMode.BindUObject(this, &AKhopeshCharacter::SetCombat);
 	Anim->OnAttack.BindUObject(this, &AKhopeshCharacter::OnAttack);
-
 	Anim->OnEndCombo.BindLambda([this]()
 	{
 		CurrentCombo = 0;
@@ -93,21 +78,18 @@ void AKhopeshCharacter::Tick(float DeltaSeconds)
 		GetCharacterMovement()->MaxWalkSpeed,
 		Speed, DeltaSeconds * SpeedRate);
 
-	if (!HasAuthority() || Anim->IsPlayMontage()) return;
+	if (!HasAuthority() || Anim->IsPlayMontage())
+		return;
 
-	if (IsEnemyNear())
+	bool IsCombat = IsEnemyNear();
+
+	if (IsCombat && !IsCombatMode)
 	{
-		if (!IsCombatMode && !IsEquipingNow)
-		{
-			PlayEquip(true);
-		}
+		PlayEquip(true);
 	}
-	else
+	else if (!IsCombat && IsCombatMode)
 	{
-		if (IsCombatMode && !IsUnequipingNow)
-		{
-			PlayEquip(false);
-		}
+		PlayEquip(false);
 	}
 }
 
@@ -142,17 +124,7 @@ float AKhopeshCharacter::TakeDamage(
 {
 	float FinalDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	HP = FMath::Clamp<uint8>(HP - FinalDamage, 0, 100);
-
-	if (HP == 0)
-	{
-		Destroy();
-		return FinalDamage;
-	}
-
-	float HitDir = DamageCauser->GetActorRotation().Yaw;
-	EMontage Montage = GetHitMontageByDir(HitDir > 180.0f ? HitDir - 360.0f : HitDir);
-	Damage_Multicast(Montage);
-
+	(HP == 0) ? Destroy() : PlayHitMontage(DamageCauser->GetActorRotation().Yaw);
 	return FinalDamage;
 }
 
@@ -178,12 +150,12 @@ void AKhopeshCharacter::Attack()
 
 	FRotator NewRotation = GetRotationByAim();
 	AttackImpl(NewRotation);
-	Attack_Server(NewRotation);
+	Attack_Request(NewRotation);
 }
 
 void AKhopeshCharacter::Defense()
 {
-
+	if (!IsCombatMode || Anim->IsPlayMontage()) return;
 }
 
 void AKhopeshCharacter::Step()
@@ -193,12 +165,12 @@ void AKhopeshCharacter::Step()
 
 	FRotator NewRotation = GetRotationByInputKey();
 	StepImpl(NewRotation);
-	Step_Server(NewRotation);
+	Step_Request(NewRotation);
 }
 
 void AKhopeshCharacter::OnAttack()
 {
-	if (!IsLocallyControlled()) return;
+	if (!HasAuthority()) return;
 
 	FHitResult Out;
 
@@ -214,21 +186,39 @@ void AKhopeshCharacter::OnAttack()
 
 	if (Out.bBlockingHit)
 	{
-		ApplyDamage(Out.GetActor());
+		Out.GetActor()->TakeDamage(AttackDamage, FDamageEvent(), GetController(), this);
 	}
 }
 
-void AKhopeshCharacter::Attack_Server_Implementation(FRotator NewRotation)
+void AKhopeshCharacter::SetCombat(bool IsCombat)
 {
-	Attack_Multicast(NewRotation);
+	FName LeftWeaponSocket = IsCombat ? TEXT("equip_sword_l") : TEXT("unequip_sword_l");
+	FName RightWeaponSocket = IsCombat ? TEXT("equip_sword_r") : TEXT("unequip_sword_r");
+
+	LeftWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, LeftWeaponSocket);
+	RightWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, RightWeaponSocket);
+
+	IsCombatMode = IsCombat;
+	CurrentCombo = 0;
+
+	if (IsCombat && !IsStartCombat)
+	{
+		Speed += IncreaseSpeed;
+		IsStartCombat = true;
+	}
 }
 
-bool AKhopeshCharacter::Attack_Server_Validate(FRotator NewRotation)
+void AKhopeshCharacter::Attack_Request_Implementation(FRotator NewRotation)
+{
+	Attack_Response(NewRotation);
+}
+
+bool AKhopeshCharacter::Attack_Request_Validate(FRotator NewRotation)
 {
 	return true;
 }
 
-void AKhopeshCharacter::Attack_Multicast_Implementation(FRotator NewRotation)
+void AKhopeshCharacter::Attack_Response_Implementation(FRotator NewRotation)
 {
 	if (!IsLocallyControlled())
 	{
@@ -236,36 +226,32 @@ void AKhopeshCharacter::Attack_Multicast_Implementation(FRotator NewRotation)
 	}
 }
 
-void AKhopeshCharacter::ApplyDamage_Implementation(AActor* DamagedActor)
+void AKhopeshCharacter::Defense_Request_Implementation(FRotator NewRotation)
 {
-	DamagedActor->TakeDamage(
-		IsStrongMode ? StrongAttackDamage : WeakAttackDamage,
-		FDamageEvent(),
-		GetController(),
-		this);
+
 }
 
-bool AKhopeshCharacter::ApplyDamage_Validate(AActor* DamagedActor)
-{
-	return DamagedActor != nullptr;
-}
-
-void AKhopeshCharacter::Damage_Multicast_Implementation(EMontage HitMontage)
-{
-	Anim->PlayMontage(HitMontage);
-}
-
-void AKhopeshCharacter::Step_Server_Implementation(FRotator NewRotation)
-{
-	Step_Multicast(NewRotation);
-}
-
-bool AKhopeshCharacter::Step_Server_Validate(FRotator NewRotation)
+bool AKhopeshCharacter::Defense_Request_Validate(FRotator NewRotation)
 {
 	return true;
 }
 
-void AKhopeshCharacter::Step_Multicast_Implementation(FRotator NewRotation)
+void AKhopeshCharacter::Defense_Response_Implementation(FRotator NewRotation)
+{
+
+}
+
+void AKhopeshCharacter::Step_Request_Implementation(FRotator NewRotation)
+{
+	Step_Response(NewRotation);
+}
+
+bool AKhopeshCharacter::Step_Request_Validate(FRotator NewRotation)
+{
+	return true;
+}
+
+void AKhopeshCharacter::Step_Response_Implementation(FRotator NewRotation)
 {
 	if (!IsLocallyControlled())
 	{
@@ -273,7 +259,12 @@ void AKhopeshCharacter::Step_Multicast_Implementation(FRotator NewRotation)
 	}
 }
 
-void AKhopeshCharacter::PlayEquipMontage_Implementation(bool IsEquip)
+void AKhopeshCharacter::PlayHitMontage_Implementation(float Direction)
+{
+	Anim->PlayMontage(GetHitMontageByDir(Direction > 180.0f ? Direction - 360.0f : Direction));
+}
+
+void AKhopeshCharacter::PlayEquip_Implementation(bool IsEquip)
 {
 	Anim->PlayMontage(IsEquip ? EMontage::EQUIP : EMontage::UNEQUIP);
 }
@@ -298,6 +289,11 @@ void AKhopeshCharacter::AttackImpl(const FRotator& NewRotation)
 	++CurrentCombo %= MaxCombo;
 }
 
+void AKhopeshCharacter::DefenseImpl(const FRotator& NewRotation)
+{
+	SetActorRotation(NewRotation);
+}
+
 void AKhopeshCharacter::StepImpl(const FRotator& NewRotation)
 {
 	SetActorRotation(NewRotation);
@@ -309,24 +305,6 @@ void AKhopeshCharacter::Move(EAxis::Type Axis, float Value)
 	FRotator Rotation = GetRotationByAim();
 	FVector Direction = FRotationMatrix(Rotation).GetUnitAxis(Axis);
 	AddMovementInput(Direction, Value);
-}
-
-void AKhopeshCharacter::PlayEquip(bool IsEquip)
-{
-	PlayEquipMontage(IsEquip);
-	IsEquipingNow = IsEquip;
-	IsUnequipingNow = !IsEquip;
-}
-
-void AKhopeshCharacter::SetEquip(bool IsEquip)
-{
-	FName LeftWeaponSocket = IsEquip ? TEXT("equip_sword_l") : TEXT("unequip_sword_l");
-	FName RightWeaponSocket = IsEquip ? TEXT("equip_sword_r") : TEXT("unequip_sword_r");
-
-	LeftWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, LeftWeaponSocket);
-	RightWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, RightWeaponSocket);
-
-	CurrentCombo = 0;
 }
 
 bool AKhopeshCharacter::IsEnemyNear() const

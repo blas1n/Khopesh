@@ -1,0 +1,9 @@
+diff a/Source/Khopesh/Private/KhopeshAnimInstance.cpp b/Source/Khopesh/Private/KhopeshAnimInstance.cpp	(rejected hunks)
+@@ -9,7 +9,6 @@
+ {
+ 	Speed = 0.0f;
+ 	IsInAir = false;
+-	IsCombatMode = false;
+ 	IsMontagePlay = false;
+ 	ComboDelay = 0.0f;
+ }

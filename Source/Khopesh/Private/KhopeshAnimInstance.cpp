@@ -9,6 +9,7 @@ UKhopeshAnimInstance::UKhopeshAnimInstance()
 {
 	Speed = 0.0f;
 	IsInAir = false;
+	IsCombatMode = false;
 	IsMontagePlay = false;
 	ComboDelay = 0.0f;
 }
@@ -61,7 +62,7 @@ void UKhopeshAnimInstance::PlayAttackMontage(EMontage Montage, uint8 Section)
 
 void UKhopeshAnimInstance::AnimNotify_Attack()
 {
-	OnAttack.Execute();
+	OnAttack.ExecuteIfBound();
 }
 
 void UKhopeshAnimInstance::AnimNotify_NextCombo()
@@ -70,18 +71,20 @@ void UKhopeshAnimInstance::AnimNotify_NextCombo()
 
 	TryGetPawnOwner()->GetWorldTimerManager().SetTimer(ComboTimer, [this]()
 	{
-		OnEndCombo.Execute();
+		OnEndCombo.ExecuteIfBound();
 	}, ComboDelay, false);
 }
 
 void UKhopeshAnimInstance::AnimNotify_Equip()
 {
-	OnSetCombatMode.Execute(true);
+	OnSetCombatMode.ExecuteIfBound(true);
+	IsCombatMode = true;
 }
 
 void UKhopeshAnimInstance::AnimNotify_Unequip()
 {
-	OnSetCombatMode.Execute(false);
+	OnSetCombatMode.ExecuteIfBound(false);
+	IsCombatMode = false;
 }
 
 void UKhopeshAnimInstance::AnimNotify_EndMotion()
