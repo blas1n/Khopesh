@@ -321,6 +321,8 @@ bool AKhopeshCharacter::SetMoveMode_Validate(int32 MoveMode)
 void AKhopeshCharacter::Die_Implementation()
 {
 	Anim->PlayMontage(EMontage::DIE);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	if (IsLocallyControlled())
 	{
