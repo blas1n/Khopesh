@@ -43,7 +43,6 @@ private:
 	void MoveForward(float Value);
 	void MoveRight(float Value);
 
-	UFUNCTION(BlueprintCallable)
 	void Attack();
 	void Defense();
 	void Step();
@@ -56,7 +55,7 @@ private:
 	void Attack_Request(FRotator NewRotation);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void Attack_Response(FRotator NewRotation);
+	void Attack_Response(EMontage Montage, FName Section, FRotator NewRotation);
 
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Defense_Request(FRotator NewRotation);
@@ -68,7 +67,7 @@ private:
 	void Step_Request(FRotator NewRotation);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void Step_Response(FRotator NewRotation);
+	void Step_Response(EMontage Montage, FRotator NewRotation);
 
 	UFUNCTION(NetMulticast, Reliable)
 	void PlayHitMontage(float Direction);
@@ -76,13 +75,16 @@ private:
 	UFUNCTION(NetMulticast, Reliable)
 	void PlayEquip(bool IsEquip);
 
+	UFUNCTION(NetMulticast, Reliable)
+	void SetWeapon(bool IsEquip);
+
 	UFUNCTION(Server, Reliable, WithValidation)
 	void SetMoveMode(int32 MoveMode);
 
 	// RPC Function Implementation
 	void Attack_Request_Implementation(FRotator NewRotation);
 	bool Attack_Request_Validate(FRotator NewRotation);
-	void Attack_Response_Implementation(FRotator NewRotation);
+	void Attack_Response_Implementation(EMontage Montage, FName Section, FRotator NewRotation);
 
 	void Defense_Request_Implementation(FRotator NewRotation);
 	bool Defense_Request_Validate(FRotator NewRotation);
@@ -90,18 +92,14 @@ private:
 
 	void Step_Request_Implementation(FRotator NewRotation);
 	bool Step_Request_Validate(FRotator NewRotation);
-	void Step_Response_Implementation(FRotator NewRotation);
+	void Step_Response_Implementation(EMontage Montage, FRotator NewRotation);
 
 	void PlayHitMontage_Implementation(float Direction);
 	void PlayEquip_Implementation(bool IsEquip);
+	void SetWeapon_Implementation(bool IsEquip);
 
 	void SetMoveMode_Implementation(int32 MoveMode);
 	bool SetMoveMode_Validate(int32 MoveMode);
-
-	// RPC Function's Implement Function
-	void AttackImpl(const FRotator& NewRotation);
-	void DefenseImpl(const FRotator& NewRotation);
-	void StepImpl(const FRotator& NewRotation);
 
 	// Other Function
 	void Move(EAxis::Type Axis, float Value);
@@ -114,7 +112,6 @@ public:
 	// Getters
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
-	FORCEINLINE float GetComboDelay() const { return ComboDelay; }
 
 private:
 	// Animation Instance
@@ -144,7 +141,7 @@ private:
 	uint8 MaxCombo;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
-	float ComboDelay;
+	float ComboDuration;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
 	float IncreaseSpeed;
@@ -156,10 +153,12 @@ private:
 	UPROPERTY(Replicated)
 	float Speed;
 
+	// Timer Handle
+	FTimerHandle ComboTimer;
+
 	// Flag Variable
 	bool IsCombatMode;
 	bool IsStrongMode;
 	bool IsStartCombat;
-	bool IsDefensing;
 };
 

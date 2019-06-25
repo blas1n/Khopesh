@@ -7,7 +7,7 @@
 #include "KhopeshAnimInstance.generated.h"
 
 DECLARE_DELEGATE(FOnAttack)
-DECLARE_DELEGATE(FOnEndCombo)
+DECLARE_DELEGATE(FOnNextCombo)
 DECLARE_DELEGATE_OneParam(FOnSetCombatMode, bool)
 
 UENUM()
@@ -45,13 +45,10 @@ private:
 public:
 	// Public Function
 	void PlayMontage(EMontage Montage);
-	void PlayAttackMontage(EMontage Montage, uint8 Section);
-	
-	// Getter
-	FORCEINLINE bool IsPlayMontage() const { return IsMontagePlay; }
+	void JumpToSection(EMontage Montage, FName Section);
 
 private:
-	// Animation Notify
+	// Binding Function
 	UFUNCTION()
 	void AnimNotify_Attack();
 
@@ -64,13 +61,10 @@ private:
 	UFUNCTION()
 	void AnimNotify_Unequip();
 
-	UFUNCTION()
-	void AnimNotify_EndMotion();
-
 public:
 	// Delegate
 	FOnAttack OnAttack;
-	FOnEndCombo OnEndCombo;
+	FOnNextCombo OnNextCombo;
 	FOnSetCombatMode OnSetCombatMode;
 
 private:
@@ -124,10 +118,6 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
 	bool IsCombatMode;
 
-	// Other Variable
+	// Animation Map
 	TMap<EMontage, UAnimMontage*> MontageMap;
-
-	FTimerHandle ComboTimer;
-	bool IsMontagePlay;
-	float ComboDelay;
 };

@@ -1,8 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "KhopeshAnimInstance.h"
-#include "KhopeshCharacter.h"
-#include "TimerManager.h"
+#include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 UKhopeshAnimInstance::UKhopeshAnimInstance()
@@ -10,8 +9,6 @@ UKhopeshAnimInstance::UKhopeshAnimInstance()
 	Speed = 0.0f;
 	IsInAir = false;
 	IsCombatMode = false;
-	IsMontagePlay = false;
-	ComboDelay = 0.0f;
 }
 
 void UKhopeshAnimInstance::NativeBeginPlay()
@@ -31,8 +28,6 @@ void UKhopeshAnimInstance::NativeBeginPlay()
 	MontageMap.Emplace(EMontage::EQUIP, Equip);
 	MontageMap.Emplace(EMontage::UNEQUIP, Unequip);
 	MontageMap.Emplace(EMontage::DIE, Die);
-
-	ComboDelay = Cast<AKhopeshCharacter>(TryGetPawnOwner())->GetComboDelay();
 }
 
 void UKhopeshAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -49,15 +44,11 @@ void UKhopeshAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 void UKhopeshAnimInstance::PlayMontage(EMontage Montage)
 {
 	Montage_Play(MontageMap[Montage]);
-	IsMontagePlay = true;
 }
 
-void UKhopeshAnimInstance::PlayAttackMontage(EMontage Montage, uint8 Section)
+void UKhopeshAnimInstance::JumpToSection(EMontage Montage, FName Section)
 {
-	PlayMontage(Montage);
-	Montage_JumpToSection(MontageMap[Montage]->GetSectionName(Section));
-	
-	TryGetPawnOwner()->GetWorldTimerManager().ClearTimer(ComboTimer);
+	Montage_JumpToSection(Section, MontageMap[Montage]);
 }
 
 void UKhopeshAnimInstance::AnimNotify_Attack()
@@ -67,12 +58,9 @@ void UKhopeshAnimInstance::AnimNotify_Attack()
 
 void UKhopeshAnimInstance::AnimNotify_NextCombo()
 {
-	IsMontagePlay = false;
-
-	TryGetPawnOwner()->GetWorldTimerManager().SetTimer(ComboTimer, [this]()
-	{
-		OnEndCombo.ExecuteIfBound();
-	}, ComboDelay, false);
+	Montage_Stop(0.25f, AttackWeak);
+	Montage_Stop(0.25f, AttackStrong);
+	OnNextCombo.ExecuteIfBound();
 }
 
 void UKhopeshAnimInstance::AnimNotify_Equip()
@@ -85,9 +73,4 @@ void UKhopeshAnimInstance::AnimNotify_Unequip()
 {
 	OnSetCombatMode.ExecuteIfBound(false);
 	IsCombatMode = false;
-}
-
-void UKhopeshAnimInstance::AnimNotify_EndMotion()
-{
-	IsMontagePlay = false;
 }
