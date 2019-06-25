@@ -87,6 +87,9 @@ private:
 	UFUNCTION(Server, Reliable, WithValidation)
 	void SetMoveMode(int32 MoveMode);
 
+	UFUNCTION(NetMulticast, Reliable)
+	void Die();
+
 	// RPC Function Implementation
 	void Attack_Request_Implementation(FRotator NewRotation);
 	bool Attack_Request_Validate(FRotator NewRotation);
@@ -108,6 +111,8 @@ private:
 
 	void SetMoveMode_Implementation(int32 MoveMode);
 	bool SetMoveMode_Validate(int32 MoveMode);
+
+	void Die_Implementation();
 
 	// Other Function
 	void Move(EAxis::Type Axis, float Value);

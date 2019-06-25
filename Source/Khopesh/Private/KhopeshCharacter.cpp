@@ -138,7 +138,7 @@ float AKhopeshCharacter::TakeDamage(
 
 	float FinalDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	HP = FMath::Clamp<uint8>(HP - FinalDamage, 0, 100);
-	(HP == 0) ? Destroy() : PlayHitMontage(DamageCauser->GetActorRotation().Yaw);
+	(HP != 0) ? PlayHitMontage(DamageCauser->GetActorRotation().Yaw) : Die();
 	return FinalDamage;
 }
 
@@ -316,6 +316,16 @@ void AKhopeshCharacter::SetMoveMode_Implementation(int32 MoveMode)
 bool AKhopeshCharacter::SetMoveMode_Validate(int32 MoveMode)
 {
 	return MoveMode == 1 || MoveMode == -1;
+}
+
+void AKhopeshCharacter::Die_Implementation()
+{
+	Anim->PlayMontage(EMontage::DIE);
+
+	if (IsLocallyControlled())
+	{
+		DisableInput(Cast<APlayerController>(GetController()));
+	}
 }
 
 void AKhopeshCharacter::Move(EAxis::Type Axis, float Value)
