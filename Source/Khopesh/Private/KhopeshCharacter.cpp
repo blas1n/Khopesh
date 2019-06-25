@@ -60,6 +60,9 @@ void AKhopeshCharacter::BeginPlay()
 
 	Anim = Cast<UKhopeshAnimInstance>(GetMesh()->GetAnimInstance());
 
+	UAnimMontage* BrokenMontage = Anim->Get(EMontage::BROKEN);
+	BrokenPlayRate = BrokenMontage->GetPlayLength() / BrokenDuration;
+
 	if (!HasAuthority()) return;
 
 	Anim->OnSetCombatMode.BindUObject(this, &AKhopeshCharacter::SetCombat);
@@ -129,17 +132,7 @@ float AKhopeshCharacter::TakeDamage(
 {
 	if (IsDefensing)
 	{
-		GetWorldTimerManager().ClearTimer(DefenseTimer);
-		EndDefenseMontage(true);
-		IsDefensing = false;
-		IsStrongMode = true;
-		Cast<AKhopeshCharacter>(DamageCauser)->PlayBroken();
-		
-		GetWorldTimerManager().SetTimer(BrokenTimer, [this, DamageCauser]()
-		{
-			IsStrongMode = false;
-		}, BrokenDuration, false);
-
+		Break(Cast<AKhopeshCharacter>(DamageCauser));
 		return 0.0f;
 	}
 
@@ -221,6 +214,7 @@ void AKhopeshCharacter::Attack_Request_Implementation(FRotator NewRotation)
 	EMontage Montage = IsStrongMode ? EMontage::ATTACK_STRONG : EMontage::ATTACK_WEAK;
 	FName Section = *FString::Printf(TEXT("Attack_%d"), ++CurrentCombo);
 	Attack_Response(Montage, Section, NewRotation);
+	GetWorldTimerManager().ClearTimer(ComboTimer);
 	CurrentCombo %= MaxCombo;
 	IsStrongMode = false;
 }
@@ -294,6 +288,7 @@ void AKhopeshCharacter::EndDefenseMontage_Implementation(bool IsSuccess)
 void AKhopeshCharacter::PlayBroken_Implementation()
 {
 	Anim->PlayMontage(EMontage::BROKEN);
+	Anim->Montage_SetPlayRate(Anim->Get(EMontage::BROKEN), BrokenPlayRate);
 }
 
 void AKhopeshCharacter::PlayEquip_Implementation(bool IsEquip)
@@ -328,6 +323,20 @@ void AKhopeshCharacter::Move(EAxis::Type Axis, float Value)
 	FRotator Rotation = GetRotationByAim();
 	FVector Direction = FRotationMatrix(Rotation).GetUnitAxis(Axis);
 	AddMovementInput(Direction, Value);
+}
+
+void AKhopeshCharacter::Break(AKhopeshCharacter* Target)
+{
+	GetWorldTimerManager().ClearTimer(DefenseTimer);
+	EndDefenseMontage(true);
+	Target->PlayBroken();
+	IsDefensing = false;
+	IsStrongMode = true;
+
+	GetWorldTimerManager().SetTimer(BrokenTimer, [this]()
+	{
+		IsStrongMode = false;
+	}, BrokenDuration, false);
 }
 
 bool AKhopeshCharacter::IsEnemyNear() const

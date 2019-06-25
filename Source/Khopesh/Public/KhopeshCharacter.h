@@ -111,6 +111,7 @@ private:
 
 	// Other Function
 	void Move(EAxis::Type Axis, float Value);
+	void Break(AKhopeshCharacter* Target);
 	bool IsEnemyNear() const;
 	FRotator GetRotationByAim() const;
 	FRotator GetRotationByInputKey() const;
@@ -170,8 +171,9 @@ private:
 	UPROPERTY(Replicated)
 	float Speed;
 
-	// Timer Handle
+	// Other Variable
 	FTimerHandle ComboTimer, DefenseTimer, BrokenTimer;
+	float BrokenPlayRate;
 
 	// Flag Variable
 	bool IsCombatMode;

@@ -49,6 +49,7 @@ public:
 
 	bool IsMontagePlay() const;
 	bool IsMontagePlay(EMontage Montage) const;
+	UAnimMontage* Get(EMontage Montage) const;
 
 private:
 	// Binding Function

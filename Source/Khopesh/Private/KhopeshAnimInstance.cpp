@@ -61,6 +61,11 @@ bool UKhopeshAnimInstance::IsMontagePlay(EMontage Montage) const
 	return Montage_IsPlaying(MontageMap[Montage]);
 }
 
+UAnimMontage* UKhopeshAnimInstance::Get(EMontage Montage) const
+{
+	return MontageMap[Montage];
+}
+
 void UKhopeshAnimInstance::AnimNotify_Attack()
 {
 	OnAttack.ExecuteIfBound();
