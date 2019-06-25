@@ -132,6 +132,7 @@ float AKhopeshCharacter::TakeDamage(
 		GetWorldTimerManager().ClearTimer(DefenseTimer);
 		EndDefenseMontage(true);
 		IsDefensing = false;
+		IsStrongMode = true;
 		return 0.0f;
 	}
 
