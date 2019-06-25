@@ -46,7 +46,6 @@ public:
 	// Public Function
 	void PlayMontage(EMontage Montage);
 	void PlayAttackMontage(EMontage Montage, uint8 Section);
-	void SetCombatMode(bool IsCombat);
 	
 	// Getter
 	FORCEINLINE bool IsPlayMontage() const { return IsMontagePlay; }
@@ -121,9 +120,6 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
 	bool IsInAir;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
-	bool IsCombatMode;
 
 	// Other Variable
 	TMap<EMontage, UAnimMontage*> MontageMap;

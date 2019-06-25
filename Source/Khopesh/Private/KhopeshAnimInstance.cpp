@@ -9,7 +9,6 @@ UKhopeshAnimInstance::UKhopeshAnimInstance()
 {
 	Speed = 0.0f;
 	IsInAir = false;
-	IsCombatMode = false;
 	IsMontagePlay = false;
 	ComboDelay = 0.0f;
 }
@@ -58,11 +57,6 @@ void UKhopeshAnimInstance::PlayAttackMontage(EMontage Montage, uint8 Section)
 	Montage_JumpToSection(MontageMap[Montage]->GetSectionName(Section));
 	
 	TryGetPawnOwner()->GetWorldTimerManager().ClearTimer(ComboTimer);
-}
-
-void UKhopeshAnimInstance::SetCombatMode(bool IsCombat)
-{
-	IsCombatMode = IsCombat;
 }
 
 void UKhopeshAnimInstance::AnimNotify_Attack()
