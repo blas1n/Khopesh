@@ -47,6 +47,9 @@ public:
 	void PlayMontage(EMontage Montage);
 	void JumpToSection(EMontage Montage, FName Section);
 
+	bool IsMontagePlay() const;
+	bool IsMontagePlay(EMontage Montage) const;
+
 private:
 	// Binding Function
 	UFUNCTION()

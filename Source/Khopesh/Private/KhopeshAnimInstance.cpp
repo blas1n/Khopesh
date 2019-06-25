@@ -51,6 +51,16 @@ void UKhopeshAnimInstance::JumpToSection(EMontage Montage, FName Section)
 	Montage_JumpToSection(Section, MontageMap[Montage]);
 }
 
+bool UKhopeshAnimInstance::IsMontagePlay() const
+{
+	return Montage_IsPlaying(nullptr);
+}
+
+bool UKhopeshAnimInstance::IsMontagePlay(EMontage Montage) const
+{
+	return Montage_IsPlaying(MontageMap[Montage]);
+}
+
 void UKhopeshAnimInstance::AnimNotify_Attack()
 {
 	OnAttack.ExecuteIfBound();

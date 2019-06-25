@@ -83,7 +83,7 @@ void AKhopeshCharacter::Tick(float DeltaSeconds)
 		GetCharacterMovement()->MaxWalkSpeed,
 		Speed, DeltaSeconds * SpeedRate);
 
-	if (!HasAuthority() || Anim->Montage_IsPlaying(nullptr))
+	if (!HasAuthority() || Anim->IsMontagePlay())
 		return;
 
 	bool IsCombat = IsEnemyNear();
@@ -127,6 +127,14 @@ void AKhopeshCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 float AKhopeshCharacter::TakeDamage(
 	float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
+	if (IsDefensing)
+	{
+		GetWorldTimerManager().ClearTimer(DefenseTimer);
+		EndDefenseMontage(true);
+		IsDefensing = false;
+		return 0.0f;
+	}
+
 	float FinalDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	HP = FMath::Clamp<uint8>(HP - FinalDamage, 0, 100);
 	(HP == 0) ? Destroy() : PlayHitMontage(DamageCauser->GetActorRotation().Yaw);
@@ -166,8 +174,6 @@ void AKhopeshCharacter::Step()
 
 void AKhopeshCharacter::OnAttack()
 {
-	if (!HasAuthority()) return;
-
 	FHitResult Out;
 
 	GetWorld()->SweepSingleByObjectType(
@@ -182,6 +188,7 @@ void AKhopeshCharacter::OnAttack()
 
 	if (Out.bBlockingHit)
 	{
+		float AttackDamage = Anim->IsMontagePlay(EMontage::ATTACK_STRONG) ? StrongAttackDamage : WeakAttackDamage;
 		Out.GetActor()->TakeDamage(AttackDamage, FDamageEvent(), GetController(), this);
 	}
 }
@@ -201,12 +208,13 @@ void AKhopeshCharacter::SetCombat(bool IsCombat)
 
 void AKhopeshCharacter::Attack_Request_Implementation(FRotator NewRotation)
 {
-	if (!IsCombatMode || Anim->Montage_IsPlaying(nullptr)) return;
+	if (!IsCombatMode || Anim->IsMontagePlay()) return;
 
 	EMontage Montage = IsStrongMode ? EMontage::ATTACK_STRONG : EMontage::ATTACK_WEAK;
 	FName Section = *FString::Printf(TEXT("Attack_%d"), ++CurrentCombo);
 	Attack_Response(Montage, Section, NewRotation);
 	CurrentCombo %= MaxCombo;
+	IsStrongMode = false;
 }
 
 bool AKhopeshCharacter::Attack_Request_Validate(FRotator NewRotation)
@@ -223,7 +231,16 @@ void AKhopeshCharacter::Attack_Response_Implementation(EMontage Montage, FName S
 
 void AKhopeshCharacter::Defense_Request_Implementation(FRotator NewRotation)
 {
+	if (!IsCombatMode || Anim->IsMontagePlay()) return;
 
+	Defense_Response(NewRotation);
+	IsDefensing = true;
+
+	GetWorldTimerManager().SetTimer(DefenseTimer, [this]()
+	{
+		EndDefenseMontage(false);
+		IsDefensing = false;
+	}, DefenseDuration, false);
 }
 
 bool AKhopeshCharacter::Defense_Request_Validate(FRotator NewRotation)
@@ -233,12 +250,13 @@ bool AKhopeshCharacter::Defense_Request_Validate(FRotator NewRotation)
 
 void AKhopeshCharacter::Defense_Response_Implementation(FRotator NewRotation)
 {
-
+	SetActorRotation(NewRotation);
+	Anim->PlayMontage(EMontage::DEFENSE);
 }
 
 void AKhopeshCharacter::Step_Request_Implementation(FRotator NewRotation)
 {
-	if (!IsStartCombat || Anim->Montage_IsPlaying(nullptr) || GetCharacterMovement()->IsFalling())
+	if (!IsStartCombat || Anim->IsMontagePlay() || GetCharacterMovement()->IsFalling())
 		return;
 
 	Step_Response(IsCombatMode ? EMontage::DODGE_EQUIP : EMontage::DODGE_UNEQUIP, NewRotation);
@@ -258,6 +276,11 @@ void AKhopeshCharacter::Step_Response_Implementation(EMontage Montage, FRotator 
 void AKhopeshCharacter::PlayHitMontage_Implementation(float Direction)
 {
 	Anim->PlayMontage(GetHitMontageByDir(Direction > 180.0f ? Direction - 360.0f : Direction));
+}
+
+void AKhopeshCharacter::EndDefenseMontage_Implementation(bool IsSuccess)
+{
+	Anim->JumpToSection(EMontage::DEFENSE, IsSuccess ? TEXT("Success") : TEXT("Fail"));
 }
 
 void AKhopeshCharacter::PlayEquip_Implementation(bool IsEquip)

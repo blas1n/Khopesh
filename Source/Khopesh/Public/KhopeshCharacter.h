@@ -73,6 +73,9 @@ private:
 	void PlayHitMontage(float Direction);
 
 	UFUNCTION(NetMulticast, Reliable)
+	void EndDefenseMontage(bool IsSuccess);
+
+	UFUNCTION(NetMulticast, Reliable)
 	void PlayEquip(bool IsEquip);
 
 	UFUNCTION(NetMulticast, Reliable)
@@ -95,6 +98,7 @@ private:
 	void Step_Response_Implementation(EMontage Montage, FRotator NewRotation);
 
 	void PlayHitMontage_Implementation(float Direction);
+	void EndDefenseMontage_Implementation(bool IsSuccess);
 	void PlayEquip_Implementation(bool IsEquip);
 	void SetWeapon_Implementation(bool IsEquip);
 
@@ -132,7 +136,10 @@ private:
 	float AttackRadius;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
-	float AttackDamage;
+	float WeakAttackDamage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
+	float StrongAttackDamage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
 	uint8 CurrentCombo;
@@ -142,6 +149,9 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
 	float ComboDuration;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
+	float DefenseDuration;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
 	float IncreaseSpeed;
@@ -154,11 +164,11 @@ private:
 	float Speed;
 
 	// Timer Handle
-	FTimerHandle ComboTimer;
+	FTimerHandle ComboTimer, DefenseTimer;
 
 	// Flag Variable
 	bool IsCombatMode;
 	bool IsStrongMode;
 	bool IsStartCombat;
+	bool IsDefensing;
 };
-
