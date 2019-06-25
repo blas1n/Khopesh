@@ -133,6 +133,13 @@ float AKhopeshCharacter::TakeDamage(
 		EndDefenseMontage(true);
 		IsDefensing = false;
 		IsStrongMode = true;
+		Cast<AKhopeshCharacter>(DamageCauser)->PlayBroken();
+		
+		GetWorldTimerManager().SetTimer(BrokenTimer, [this, DamageCauser]()
+		{
+			IsStrongMode = false;
+		}, BrokenDuration, false);
+
 		return 0.0f;
 	}
 
@@ -282,6 +289,11 @@ void AKhopeshCharacter::PlayHitMontage_Implementation(float Direction)
 void AKhopeshCharacter::EndDefenseMontage_Implementation(bool IsSuccess)
 {
 	Anim->JumpToSection(EMontage::DEFENSE, IsSuccess ? TEXT("Success") : TEXT("Fail"));
+}
+
+void AKhopeshCharacter::PlayBroken_Implementation()
+{
+	Anim->PlayMontage(EMontage::BROKEN);
 }
 
 void AKhopeshCharacter::PlayEquip_Implementation(bool IsEquip)

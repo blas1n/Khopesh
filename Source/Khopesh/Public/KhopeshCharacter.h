@@ -76,6 +76,9 @@ private:
 	void EndDefenseMontage(bool IsSuccess);
 
 	UFUNCTION(NetMulticast, Reliable)
+	void PlayBroken();
+
+	UFUNCTION(NetMulticast, Reliable)
 	void PlayEquip(bool IsEquip);
 
 	UFUNCTION(NetMulticast, Reliable)
@@ -99,6 +102,7 @@ private:
 
 	void PlayHitMontage_Implementation(float Direction);
 	void EndDefenseMontage_Implementation(bool IsSuccess);
+	void PlayBroken_Implementation();
 	void PlayEquip_Implementation(bool IsEquip);
 	void SetWeapon_Implementation(bool IsEquip);
 
@@ -154,6 +158,9 @@ private:
 	float DefenseDuration;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
+	float BrokenDuration;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
 	float IncreaseSpeed;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
@@ -164,7 +171,7 @@ private:
 	float Speed;
 
 	// Timer Handle
-	FTimerHandle ComboTimer, DefenseTimer;
+	FTimerHandle ComboTimer, DefenseTimer, BrokenTimer;
 
 	// Flag Variable
 	bool IsCombatMode;
