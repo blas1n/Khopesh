@@ -72,6 +72,9 @@ private:
 	UFUNCTION(NetMulticast, Reliable)
 	void PlayHitMontage(float Direction);
 
+	UFUNCTION(Client, Reliable)
+	void UpdateWidget(float HP);
+
 	UFUNCTION(NetMulticast, Reliable)
 	void EndDefenseMontage(bool IsSuccess);
 
@@ -104,6 +107,8 @@ private:
 	void Step_Response_Implementation(EMontage Montage, FRotator NewRotation);
 
 	void PlayHitMontage_Implementation(float Direction);
+	void UpdateWidget_Implementation(float HP);
+
 	void EndDefenseMontage_Implementation(bool IsSuccess);
 	void PlayBroken_Implementation();
 	void PlayEquip_Implementation(bool IsEquip);
@@ -114,6 +119,12 @@ private:
 
 	void Die_Implementation();
 
+protected:
+	// Blueprint Function
+	UFUNCTION(BlueprintImplementableEvent, Category = UI)
+	void SetHPWidget(float HP);
+
+private:
 	// Other Function
 	void Move(EAxis::Type Axis, float Value);
 	void Break(AKhopeshCharacter* Target);

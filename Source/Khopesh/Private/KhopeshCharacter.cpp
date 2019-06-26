@@ -139,6 +139,7 @@ float AKhopeshCharacter::TakeDamage(
 	float FinalDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	HP = FMath::Clamp<uint8>(HP - FinalDamage, 0, 100);
 	(HP != 0) ? PlayHitMontage(DamageCauser->GetActorRotation().Yaw) : Die();
+	UpdateWidget(HP);
 	return FinalDamage;
 }
 
@@ -200,7 +201,7 @@ void AKhopeshCharacter::SetCombat(bool IsCombat)
 	IsCombatMode = IsCombat;
 	CurrentCombo = 0;
 
-	if (IsCombat && !IsStartCombat)
+	if (!IsStartCombat && IsCombat)
 	{
 		Speed += IncreaseSpeed;
 		IsStartCombat = true;
@@ -278,6 +279,11 @@ void AKhopeshCharacter::Step_Response_Implementation(EMontage Montage, FRotator 
 void AKhopeshCharacter::PlayHitMontage_Implementation(float Direction)
 {
 	Anim->PlayMontage(GetHitMontageByDir(Direction > 180.0f ? Direction - 360.0f : Direction));
+}
+
+void AKhopeshCharacter::UpdateWidget_Implementation(float HP)
+{
+	SetHPWidget(HP);
 }
 
 void AKhopeshCharacter::EndDefenseMontage_Implementation(bool IsSuccess)
