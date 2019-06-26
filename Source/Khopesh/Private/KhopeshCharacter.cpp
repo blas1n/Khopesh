@@ -139,7 +139,6 @@ float AKhopeshCharacter::TakeDamage(
 	float FinalDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	HP = FMath::Clamp<uint8>(HP - FinalDamage, 0, 100);
 	(HP != 0) ? PlayHitMontage(DamageCauser->GetActorRotation().Yaw) : Die();
-	UpdateWidget(HP);
 	return FinalDamage;
 }
 
@@ -178,7 +177,7 @@ void AKhopeshCharacter::OnAttack()
 {
 	FHitResult Out;
 
-	GetWorld()->SweepSingleByObjectType(
+	GetWorld()->SweepSingleByChannel(
 		Out,
 		GetActorLocation(),
 		GetActorLocation() + GetActorForwardVector() * AttackRange,
@@ -188,7 +187,7 @@ void AKhopeshCharacter::OnAttack()
 		FCollisionQueryParams(NAME_None, false, this)
 	);
 
-	if (Out.bBlockingHit)
+	if (Out.bBlockingHit && Cast<AKhopeshCharacter>(Out.GetActor()))
 	{
 		float AttackDamage = Anim->IsMontagePlay(EMontage::ATTACK_STRONG) ? StrongAttackDamage : WeakAttackDamage;
 		Out.GetActor()->TakeDamage(AttackDamage, FDamageEvent(), GetController(), this);
@@ -279,11 +278,6 @@ void AKhopeshCharacter::Step_Response_Implementation(EMontage Montage, FRotator 
 void AKhopeshCharacter::PlayHitMontage_Implementation(float Direction)
 {
 	Anim->PlayMontage(GetHitMontageByDir(Direction > 180.0f ? Direction - 360.0f : Direction));
-}
-
-void AKhopeshCharacter::UpdateWidget_Implementation(float HP)
-{
-	SetHPWidget(HP);
 }
 
 void AKhopeshCharacter::EndDefenseMontage_Implementation(bool IsSuccess)
