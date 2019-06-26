@@ -88,7 +88,7 @@ private:
 	void SetMoveMode(int32 MoveMode);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void Die();
+	void PlayDie();
 
 	// RPC Function Implementation
 	void Attack_Request_Implementation(FRotator NewRotation);
@@ -112,17 +112,14 @@ private:
 	void SetMoveMode_Implementation(int32 MoveMode);
 	bool SetMoveMode_Validate(int32 MoveMode);
 
-	void Die_Implementation();
-
-protected:
-	// Blueprint Function
-	UFUNCTION(BlueprintImplementableEvent, Category = UI)
-	void SetHPWidget();
+	void PlayDie_Implementation();
 
 private:
 	// Other Function
 	void Move(EAxis::Type Axis, float Value);
 	void Break(AKhopeshCharacter* Target);
+	void Die();
+
 	bool IsEnemyNear() const;
 	FRotator GetRotationByAim() const;
 	FRotator GetRotationByInputKey() const;
@@ -139,7 +136,7 @@ private:
 	class UKhopeshAnimInstance* Anim;
 
 	// Blueprint Property
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, ReplicatedUsing = SetHPWidget, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Replicated, Meta = (AllowPrivateAccess = true))
 	uint8 HP;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))

@@ -44,14 +44,12 @@ AKhopeshCharacter::AKhopeshCharacter()
 	LeftWeapon->CanCharacterStepUpOn = ECanBeCharacterBase::ECB_No;
 	LeftWeapon->SetCollisionProfileName(TEXT("NoCollision"));
 	LeftWeapon->SetGenerateOverlapEvents(false);
-	LeftWeapon->SetEnableGravity(false);
 
 	RightWeapon = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RightWeapon"));
 	RightWeapon->SetupAttachment(GetMesh(), TEXT("unequip_sword_r"));
 	RightWeapon->CanCharacterStepUpOn = ECanBeCharacterBase::ECB_No;
 	RightWeapon->SetCollisionProfileName(TEXT("NoCollision"));
 	RightWeapon->SetGenerateOverlapEvents(false);
-	RightWeapon->SetEnableGravity(false);
 }
 
 void AKhopeshCharacter::BeginPlay()
@@ -177,17 +175,17 @@ void AKhopeshCharacter::OnAttack()
 {
 	FHitResult Out;
 
-	GetWorld()->SweepSingleByChannel(
+	GetWorld()->SweepSingleByObjectType(
 		Out,
 		GetActorLocation(),
 		GetActorLocation() + GetActorForwardVector() * AttackRange,
 		FQuat::Identity,
-		ECollisionChannel::ECC_Pawn,
+		ECollisionChannel::ECC_GameTraceChannel1,
 		FCollisionShape::MakeSphere(AttackRadius),
 		FCollisionQueryParams(NAME_None, false, this)
 	);
 
-	if (Out.bBlockingHit && Cast<AKhopeshCharacter>(Out.GetActor()))
+	if (Out.bBlockingHit)
 	{
 		float AttackDamage = Anim->IsMontagePlay(EMontage::ATTACK_STRONG) ? StrongAttackDamage : WeakAttackDamage;
 		Out.GetActor()->TakeDamage(AttackDamage, FDamageEvent(), GetController(), this);
@@ -318,11 +316,19 @@ bool AKhopeshCharacter::SetMoveMode_Validate(int32 MoveMode)
 	return MoveMode == 1 || MoveMode == -1;
 }
 
-void AKhopeshCharacter::Die_Implementation()
+void AKhopeshCharacter::PlayDie_Implementation()
 {
 	Anim->PlayMontage(EMontage::DIE);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	LeftWeapon->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	LeftWeapon->SetSimulatePhysics(true);
+	LeftWeapon->DetachFromParent(true);
+	
+	RightWeapon->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	RightWeapon->SetSimulatePhysics(true);
+	RightWeapon->DetachFromParent(true);
 
 	if (IsLocallyControlled())
 	{
@@ -351,12 +357,17 @@ void AKhopeshCharacter::Break(AKhopeshCharacter* Target)
 	}, BrokenDuration, false);
 }
 
+void AKhopeshCharacter::Die()
+{
+	PlayDie();
+}
+
 bool AKhopeshCharacter::IsEnemyNear() const
 {
 	return GetWorld()->OverlapAnyTestByObjectType(
 		GetActorLocation(),
 		FQuat::Identity,
-		FCollisionObjectQueryParams(ECollisionChannel::ECC_Pawn),
+		ECollisionChannel::ECC_GameTraceChannel1,
 		FCollisionShape::MakeSphere(CombatSwapRange),
 		FCollisionQueryParams(NAME_None, false, this)
 	);
