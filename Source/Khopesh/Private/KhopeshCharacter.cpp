@@ -322,14 +322,6 @@ void AKhopeshCharacter::PlayDie_Implementation()
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-	LeftWeapon->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	LeftWeapon->SetSimulatePhysics(true);
-	LeftWeapon->DetachFromParent(true);
-	
-	RightWeapon->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	RightWeapon->SetSimulatePhysics(true);
-	RightWeapon->DetachFromParent(true);
-
 	if (IsLocallyControlled())
 	{
 		DisableInput(Cast<APlayerController>(GetController()));
