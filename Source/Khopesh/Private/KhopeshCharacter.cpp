@@ -1,6 +1,7 @@
 // Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 
 #include "KhopeshCharacter.h"
+#include "KhopeshPlayerController.h"
 #include "KhopeshAnimInstance.h"
 #include "UnrealNetwork.h"
 #include "TimerManager.h"
@@ -351,6 +352,8 @@ void AKhopeshCharacter::Break(AKhopeshCharacter* Target)
 
 void AKhopeshCharacter::Die()
 {
+	auto MyController = Cast<AKhopeshPlayerController>(GetController());
+	MyController->PlayerDead();
 	PlayDie();
 }
 
