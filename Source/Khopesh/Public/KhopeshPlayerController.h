@@ -10,6 +10,9 @@ UCLASS()
 class KHOPESH_API AKhopeshPlayerController : public APlayerController
 {
 	GENERATED_BODY()
+
+private:
+	virtual void BeginPlay() override;
 	
 public:
 	UFUNCTION(Client, Reliable)
@@ -22,6 +25,7 @@ public:
 	void SetUIInputMode();
 
 	void PlayerDead();
+	void BackToLobby();
 
 private:
 	void ShowResultWidget_Implementation(FText const& ResultText);
