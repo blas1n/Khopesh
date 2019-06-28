@@ -24,8 +24,10 @@ public:
 	UFUNCTION(Client, Reliable)
 	void SetUIInputMode();
 
-	void PlayerDead();
+	UFUNCTION(BlueprintCallable)
 	void BackToLobby();
+
+	void PlayerDead();
 
 private:
 	void ShowResultWidget_Implementation(FText const& ResultText);
