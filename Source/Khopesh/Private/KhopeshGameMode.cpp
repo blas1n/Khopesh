@@ -2,9 +2,17 @@
 
 #include "KhopeshGameMode.h"
 #include "TimerManager.h"
+#include "Engine/World.h"
 #include "KhopeshCharacter.h"
+#include "Kismet/GameplayStatics.h"
 #include "KhopeshPlayerController.h"
+#include "GameFramework/PlayerStart.h"
 #include "UObject/ConstructorHelpers.h"
+
+void AKhopeshGameMode::BeginPlay()
+{
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), Spawns);
+}
 
 void AKhopeshGameMode::PostLogin(APlayerController* NewPlayer)
 {	
@@ -27,6 +35,8 @@ void AKhopeshGameMode::Logout(AController* Exiting)
 	if (Controller)
 	{
 		Players.Remove(Controller);
+		Spawns.Add(TakenSpawns[Controller]);
+		TakenSpawns.Remove(Controller);
 	}
 }
 
@@ -47,8 +57,16 @@ void AKhopeshGameMode::PlayerDead(AKhopeshPlayerController* DeadPlayer)
 	}, ShowResultDelay, false);
 }
 
+AActor* AKhopeshGameMode::GetPlayerStart(AController* Player)
+{
+	auto PlayerStart = Spawns[0];
+	TakenSpawns.Add(Cast<AKhopeshPlayerController>(Player), PlayerStart);
+	Spawns.RemoveAt(0);
+	return PlayerStart;
+}
+
 void AKhopeshGameMode::ShowResult(AKhopeshPlayerController* WinPlayer, AKhopeshPlayerController* LosePlayer)
 {
-	WinPlayer->ShowResultWidget(WinText);
-	LosePlayer->ShowResultWidget(LoseText);
+	WinPlayer->ShowResultWidget(true);
+	LosePlayer->ShowResultWidget(false);
 }

@@ -16,7 +16,7 @@ private:
 	
 public:
 	UFUNCTION(Client, Reliable)
-	void ShowResultWidget(FText const& ResultText);
+	void ShowResultWidget(bool IsWin);
 
 	UFUNCTION(Client, Reliable)
 	void SetGameInputMode();
@@ -30,11 +30,11 @@ public:
 	void PlayerDead();
 
 private:
-	void ShowResultWidget_Implementation(FText const& ResultText);
+	void ShowResultWidget_Implementation(bool IsWin);
 
 protected:
 	UFUNCTION(BlueprintImplementableEvent)
-	void OnShowResultWidget(FText const& ResultText);
+	void OnShowResultWidget(bool IsWin);
 
 private:
 	void SetGameInputMode_Implementation();

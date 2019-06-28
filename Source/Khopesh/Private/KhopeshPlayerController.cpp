@@ -23,9 +23,9 @@ void AKhopeshPlayerController::BackToLobby()
 	UGameplayStatics::OpenLevel(GetWorld(), TEXT("Lobby"));
 }
 
-void AKhopeshPlayerController::ShowResultWidget_Implementation(FText const& ResultText)
+void AKhopeshPlayerController::ShowResultWidget_Implementation(bool IsWin)
 {
-	OnShowResultWidget(ResultText);
+	OnShowResultWidget(IsWin);
 }
 
 void AKhopeshPlayerController::SetGameInputMode_Implementation()
