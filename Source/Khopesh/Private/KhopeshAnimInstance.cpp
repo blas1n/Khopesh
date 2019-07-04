@@ -46,7 +46,7 @@ void UKhopeshAnimInstance::PlayMontage(EMontage Montage)
 	Montage_Play(MontageMap[Montage]);
 }
 
-void UKhopeshAnimInstance::JumpToSection(EMontage Montage, FName Section)
+void UKhopeshAnimInstance::JumpToSection(EMontage Montage, FName const& Section)
 {
 	Montage_JumpToSection(Section, MontageMap[Montage]);
 }

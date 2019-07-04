@@ -31,12 +31,10 @@ public:
 
 private:
 	void ShowResultWidget_Implementation(bool IsWin);
+	void SetGameInputMode_Implementation();
+	void SetUIInputMode_Implementation();
 
 protected:
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnShowResultWidget(bool IsWin);
-
-private:
-	void SetGameInputMode_Implementation();
-	void SetUIInputMode_Implementation();
 };

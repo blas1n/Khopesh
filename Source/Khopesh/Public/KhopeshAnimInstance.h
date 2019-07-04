@@ -13,19 +13,20 @@ DECLARE_DELEGATE_OneParam(FOnSetCombatMode, bool)
 UENUM()
 enum class EMontage : uint8
 {
-	ATTACK_WEAK UMETA(DisplayName = "Attack Weak"),
-	ATTACK_STRONG UMETA(DisplayName = "Attack Strong"),
-	DODGE_EQUIP UMETA(DisplayName = "Dodge Equip"),
-	DODGE_UNEQUIP UMETA(DisplayName = "Dodge Unequip"),
-	DEFENSE UMETA(DisplayName = "Defense"),
-	HIT_FRONT UMETA(DisplayName = "Hit Front"),
-	HIT_LEFT UMETA(DisplayName = "Hit Left"),
-	HIT_BACK UMETA(DisplayName = "Hit Back"),
-	HIT_RIGHT UMETA(DisplayName = "Hit Right"),
-	BROKEN UMETA(DisplayName = "Broken"),
-	EQUIP UMETA(DisplayName = "Equip"),
-	UNEQUIP UMETA(DisplayName = "Unequip"),
-	DIE UMETA(DisplayName = "Die"),
+	ATTACK_WEAK,
+	ATTACK_STRONG,
+	DODGE_EQUIP,
+	DODGE_UNEQUIP,
+	DEFENSE,
+	HIT_FRONT,
+	HIT_LEFT,
+	HIT_BACK,
+	HIT_RIGHT,
+	BROKEN,
+	EQUIP,
+	UNEQUIP,
+	START,
+	DIE,
 };
 
 UCLASS()
@@ -45,7 +46,7 @@ private:
 public:
 	// Public Function
 	void PlayMontage(EMontage Montage);
-	void JumpToSection(EMontage Montage, FName Section);
+	void JumpToSection(EMontage Montage, FName const& Section);
 
 	bool IsMontagePlay() const;
 	bool IsMontagePlay(EMontage Montage) const;
