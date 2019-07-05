@@ -196,7 +196,6 @@ void AKhopeshCharacter::OnAttack()
 		if (Idx < 0) Idx = HitNum.Num() - 1;
 
 		AttackDamage /= HitNum[Idx];
-		UE_LOG(LogTemp, Warning, TEXT("%f"), AttackDamage);
 		Out.GetActor()->TakeDamage(AttackDamage, FDamageEvent(), GetController(), this);
 	}
 }
@@ -216,7 +215,7 @@ void AKhopeshCharacter::SetCombat(bool IsCombat)
 
 void AKhopeshCharacter::Attack_Request_Implementation(FRotator NewRotation)
 {
-	if (!IsCombatMode || Anim->IsMontagePlay()) return;
+	if (!IsCombatMode || (Anim->IsMontagePlay() && !Anim->IsMontagePlay(EMontage::DODGE_EQUIP))) return;
 
 	EMontage Montage = IsStrongMode ? EMontage::ATTACK_STRONG : EMontage::ATTACK_WEAK;
 	FName Section = *FString::Printf(TEXT("Attack_%d"), ++CurrentCombo);
@@ -265,10 +264,11 @@ void AKhopeshCharacter::Defense_Response_Implementation(FRotator NewRotation)
 
 void AKhopeshCharacter::Step_Request_Implementation(FRotator NewRotation)
 {
-	if (!IsStartCombat || Anim->IsMontagePlay() || GetCharacterMovement()->IsFalling())
+	if (!IsStartCombat || !CanStep() || Anim->IsMontagePlay() || GetCharacterMovement()->IsFalling())
 		return;
 
 	Step_Response(IsCombatMode ? EMontage::DODGE_EQUIP : EMontage::DODGE_UNEQUIP, NewRotation);
+	NextStepTime = GetWorld()->GetTimeSeconds() + StepDelay;
 }
 
 bool AKhopeshCharacter::Step_Request_Validate(FRotator NewRotation)
@@ -363,6 +363,11 @@ void AKhopeshCharacter::Die()
 	auto MyController = Cast<AKhopeshPlayerController>(GetController());
 	MyController->PlayerDead();
 	PlayDie();
+}
+
+bool AKhopeshCharacter::CanStep() const
+{
+	return (FMath::IsNearlyEqual(NextStepTime, 0.0f) || NextStepTime <= GetWorld()->GetTimeSeconds());
 }
 
 bool AKhopeshCharacter::IsEnemyNear() const

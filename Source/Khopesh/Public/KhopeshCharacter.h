@@ -120,6 +120,7 @@ private:
 	void Break(AKhopeshCharacter* Target);
 	void Die();
 
+	bool CanStep() const;
 	bool IsEnemyNear() const;
 	FRotator GetRotationByAim() const;
 	FRotator GetRotationByInputKey() const;
@@ -170,6 +171,9 @@ private:
 	float BrokenDuration;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
+	float StepDelay;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
 	float IncreaseSpeed;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
@@ -188,6 +192,7 @@ private:
 	// Other Variable
 	FTimerHandle ComboTimer, DefenseTimer, BrokenTimer;
 	float BrokenPlayRate;
+	float NextStepTime;
 
 	// Flag Variable
 	bool IsCombatMode;
