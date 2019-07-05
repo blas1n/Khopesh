@@ -136,7 +136,7 @@ float AKhopeshCharacter::TakeDamage(
 	}
 
 	float FinalDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-	HP = FMath::Clamp<uint8>(HP - FinalDamage, 0, 100);
+	HP = FMath::Clamp<int32>(HP - FinalDamage, 0, 100);
 	(HP != 0) ? PlayHitMontage(DamageCauser->GetActorRotation().Yaw) : Die();
 	return FinalDamage;
 }

@@ -137,7 +137,7 @@ private:
 
 	// Blueprint Property
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Replicated, Meta = (AllowPrivateAccess = true))
-	uint8 HP;
+	int32 HP;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
 	float CombatSwapRange;
