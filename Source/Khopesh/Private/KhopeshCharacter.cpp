@@ -136,8 +136,8 @@ float AKhopeshCharacter::TakeDamage(
 	}
 
 	float FinalDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-	HP = FMath::Clamp<int32>(HP - FinalDamage, 0, 100);
-	(HP != 0) ? PlayHitMontage(DamageCauser->GetActorRotation().Yaw) : Die();
+	HP = FMath::Clamp<float>(HP - FinalDamage, 0.0f, 100.0f);
+	(HP > 0.0f) ? PlayHitMontage(DamageCauser->GetActorRotation().Yaw) : Die();
 	return FinalDamage;
 }
 
@@ -188,7 +188,15 @@ void AKhopeshCharacter::OnAttack()
 
 	if (Out.bBlockingHit)
 	{
-		float AttackDamage = Anim->IsMontagePlay(EMontage::ATTACK_STRONG) ? StrongAttackDamage : WeakAttackDamage;
+		bool IsStrongAttack = Anim->IsMontagePlay(EMontage::ATTACK_STRONG);
+		float AttackDamage = IsStrongAttack ? StrongAttackDamage : WeakAttackDamage;
+		auto const& HitNum = IsStrongAttack ? StrongAttackHitNum : WeakAttackHitNum;
+
+		int32 Idx = CurrentCombo - 1;
+		if (Idx < 0) Idx = HitNum.Num() - 1;
+
+		AttackDamage /= HitNum[Idx];
+		UE_LOG(LogTemp, Warning, TEXT("%f"), AttackDamage);
 		Out.GetActor()->TakeDamage(AttackDamage, FDamageEvent(), GetController(), this);
 	}
 }

@@ -137,7 +137,7 @@ private:
 
 	// Blueprint Property
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Replicated, Meta = (AllowPrivateAccess = true))
-	int32 HP;
+	float HP;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
 	float CombatSwapRange;
@@ -174,6 +174,12 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
 	float SpeedRate;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = HitNum, Meta = (AllowPrivateAccess = true))
+	TArray<uint8> WeakAttackHitNum;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = HitNum, Meta = (AllowPrivateAccess = true))
+	TArray<uint8> StrongAttackHitNum;
 
 	// Replicated Property (HP exclude here. Because it include Blueprint Property.)
 	UPROPERTY(Replicated)
