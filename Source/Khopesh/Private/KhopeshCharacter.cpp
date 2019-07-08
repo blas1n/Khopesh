@@ -32,9 +32,9 @@ AKhopeshCharacter::AKhopeshCharacter()
 	
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
+	CameraBoom->bUsePawnControlRotation = true;
 	CameraBoom->TargetArmLength = 450.0f;
 	CameraBoom->bEnableCameraLag = true;
-	CameraBoom->bUsePawnControlRotation = true;
 
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
@@ -239,7 +239,7 @@ void AKhopeshCharacter::Attack_Response_Implementation(EMontage Montage, FName S
 
 void AKhopeshCharacter::Defense_Request_Implementation(FRotator NewRotation)
 {
-	if (!IsCombatMode || Anim->IsMontagePlay()) return;
+	if (!IsCombatMode || (Anim->IsMontagePlay() && !Anim->IsMontagePlay(EMontage::DODGE_EQUIP))) return;
 
 	Defense_Response(NewRotation);
 	IsDefensing = true;
@@ -281,8 +281,11 @@ void AKhopeshCharacter::Step_Response_Implementation(EMontage Montage, FRotator 
 	SetActorRotation(NewRotation);
 	Anim->PlayMontage(Montage);
 
-	CurrentTrailNum = 0;
-	GetWorldTimerManager().SetTimer(TrailTimer, this, &AKhopeshCharacter::SpawnTrail, TrailPeriod, true);
+	if (Montage == EMontage::DODGE_EQUIP)
+	{
+		CurrentTrailNum = 0;
+		GetWorldTimerManager().SetTimer(TrailTimer, this, &AKhopeshCharacter::SpawnTrail, TrailPeriod, true);
+	}
 }
 
 void AKhopeshCharacter::PlayHitMontage_Implementation(float Direction)
