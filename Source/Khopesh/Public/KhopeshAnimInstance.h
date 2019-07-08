@@ -112,7 +112,7 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
 	UAnimMontage* Die;
-
+	
 	// Blueprint Property
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
 	float Speed;

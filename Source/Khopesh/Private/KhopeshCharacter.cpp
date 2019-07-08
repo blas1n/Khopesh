@@ -280,6 +280,9 @@ void AKhopeshCharacter::Step_Response_Implementation(EMontage Montage, FRotator 
 {
 	SetActorRotation(NewRotation);
 	Anim->PlayMontage(Montage);
+
+	CurrentTrailNum = 0;
+	GetWorldTimerManager().SetTimer(TrailTimer, this, &AKhopeshCharacter::SpawnTrail, TrailPeriod, true);
 }
 
 void AKhopeshCharacter::PlayHitMontage_Implementation(float Direction)
@@ -356,6 +359,19 @@ void AKhopeshCharacter::Break(AKhopeshCharacter* Target)
 	{
 		IsStrongMode = false;
 	}, BrokenDuration, false);
+}
+
+void AKhopeshCharacter::SpawnTrail()
+{
+	FActorSpawnParameters ActorSpawnParams;
+	ActorSpawnParams.Owner = this;
+
+	GetWorld()->SpawnActor<AActor>(GhostTrailClass, GetMesh()->GetComponentTransform(), ActorSpawnParams);
+	
+	if (++CurrentTrailNum == MaxTrailNum)
+	{
+		GetWorldTimerManager().ClearTimer(TrailTimer);
+	}
 }
 
 void AKhopeshCharacter::Die()

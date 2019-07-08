@@ -118,6 +118,7 @@ private:
 	// Other Function
 	void Move(EAxis::Type Axis, float Value);
 	void Break(AKhopeshCharacter* Target);
+	void SpawnTrail();
 	void Die();
 
 	bool CanStep() const;
@@ -185,12 +186,22 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = HitNum, Meta = (AllowPrivateAccess = true))
 	TArray<uint8> StrongAttackHitNum;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Trail, Meta = (AllowPrivateAccess = true))
+	TSubclassOf<AActor> GhostTrailClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Trail, Meta = (AllowPrivateAccess = true))
+	float TrailPeriod;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Trail, Meta = (AllowPrivateAccess = true))
+	uint8 MaxTrailNum;
+
 	// Replicated Property (HP exclude here. Because it include Blueprint Property.)
 	UPROPERTY(Replicated)
 	float Speed;
 
 	// Other Variable
-	FTimerHandle ComboTimer, DefenseTimer, BrokenTimer;
+	FTimerHandle ComboTimer, TrailTimer, DefenseTimer, BrokenTimer;
+	uint8 CurrentTrailNum;
 	float BrokenPlayRate;
 	float NextStepTime;
 
