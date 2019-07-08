@@ -215,7 +215,7 @@ void AKhopeshCharacter::SetCombat(bool IsCombat)
 
 void AKhopeshCharacter::Attack_Request_Implementation(FRotator NewRotation)
 {
-	if (!IsCombatMode || (Anim->IsMontagePlay() && !Anim->IsMontagePlay(EMontage::DODGE_EQUIP))) return;
+	if (!IsCombatMode || Anim->IsMontagePlay()) return;
 
 	EMontage Montage = IsStrongMode ? EMontage::ATTACK_STRONG : EMontage::ATTACK_WEAK;
 	FName Section = *FString::Printf(TEXT("Attack_%d"), ++CurrentCombo);
@@ -239,7 +239,7 @@ void AKhopeshCharacter::Attack_Response_Implementation(EMontage Montage, FName S
 
 void AKhopeshCharacter::Defense_Request_Implementation(FRotator NewRotation)
 {
-	if (!IsCombatMode || (Anim->IsMontagePlay() && !Anim->IsMontagePlay(EMontage::DODGE_EQUIP))) return;
+	if (!IsCombatMode || Anim->IsMontagePlay()) return;
 
 	Defense_Response(NewRotation);
 	IsDefensing = true;
@@ -267,7 +267,7 @@ void AKhopeshCharacter::Step_Request_Implementation(FRotator NewRotation)
 	if (!IsStartCombat || !CanStep() || Anim->IsMontagePlay() || GetCharacterMovement()->IsFalling())
 		return;
 
-	Step_Response(IsCombatMode ? EMontage::DODGE_EQUIP : EMontage::DODGE_UNEQUIP, NewRotation);
+	Step_Response(NewRotation);
 	NextStepTime = GetWorld()->GetTimeSeconds() + StepDelay;
 }
 
@@ -276,10 +276,10 @@ bool AKhopeshCharacter::Step_Request_Validate(FRotator NewRotation)
 	return true;
 }
 
-void AKhopeshCharacter::Step_Response_Implementation(EMontage Montage, FRotator NewRotation)
+void AKhopeshCharacter::Step_Response_Implementation(FRotator NewRotation)
 {
 	SetActorRotation(NewRotation);
-	Anim->PlayMontage(Montage);
+	Anim->PlayMontage(EMontage::DODGE);
 }
 
 void AKhopeshCharacter::PlayHitMontage_Implementation(float Direction)

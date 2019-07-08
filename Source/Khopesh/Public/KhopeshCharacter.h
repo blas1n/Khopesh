@@ -67,7 +67,7 @@ private:
 	void Step_Request(FRotator NewRotation);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void Step_Response(EMontage Montage, FRotator NewRotation);
+	void Step_Response(FRotator NewRotation);
 
 	UFUNCTION(NetMulticast, Reliable)
 	void PlayHitMontage(float Direction);
@@ -101,7 +101,7 @@ private:
 
 	void Step_Request_Implementation(FRotator NewRotation);
 	bool Step_Request_Validate(FRotator NewRotation);
-	void Step_Response_Implementation(EMontage Montage, FRotator NewRotation);
+	void Step_Response_Implementation(FRotator NewRotation);
 
 	void PlayHitMontage_Implementation(float Direction);
 	void EndDefenseMontage_Implementation(bool IsSuccess);
