@@ -157,9 +157,6 @@ private:
 	float StrongAttackDamage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
-	uint8 CurrentCombo;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
 	uint8 MaxCombo;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
@@ -202,6 +199,7 @@ private:
 	// Other Variable
 	FTimerHandle ComboTimer, TrailTimer, DefenseTimer, BrokenTimer;
 	uint8 CurrentTrailNum;
+	uint8 CurrentCombo;
 	float BrokenPlayRate;
 	float NextStepTime;
 
