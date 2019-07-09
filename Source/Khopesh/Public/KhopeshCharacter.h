@@ -39,13 +39,15 @@ private:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
-	// Binding Function (Excluding dash bind function because it include RPC)
+	// Binding Function (Excluding dodge bind function because it include RPC)
 	void MoveForward(float Value);
 	void MoveRight(float Value);
 
 	void Attack();
 	void Defense();
-	void Dodge();
+
+	void OnPressDodge();
+	void OnReleaseDodge();
 
 	void OnAttack();
 	void SetCombat(bool IsEquip);
@@ -64,10 +66,10 @@ private:
 	void Defense_Response(FRotator NewRotation);
 
 	UFUNCTION(Server, Reliable, WithValidation)
-	void Dodge_Request(FRotator NewRotation);
+	void Dodge_Request(FRotator NewRotation, bool IsLongDodge);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void Dodge_Response(FRotator NewRotation);
+	void Dodge_Response(FRotator NewRotation, bool IsLongDodge);
 
 	UFUNCTION(Client, Reliable)
 	void AttackCameraShake();
@@ -100,9 +102,9 @@ private:
 	bool Defense_Request_Validate(FRotator NewRotation);
 	void Defense_Response_Implementation(FRotator NewRotation);
 
-	void Dodge_Request_Implementation(FRotator NewRotation);
-	bool Dodge_Request_Validate(FRotator NewRotation);
-	void Dodge_Response_Implementation(FRotator NewRotation);
+	void Dodge_Request_Implementation(FRotator NewRotation, bool IsLongDodge);
+	bool Dodge_Request_Validate(FRotator NewRotation, bool IsLongDodge);
+	void Dodge_Response_Implementation(FRotator NewRotation, bool IsLongDodge);
 
 	void AttackCameraShake_Implementation();
 
@@ -179,6 +181,9 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Speed, Meta = (AllowPrivateAccess = true))
 	float SpeedRate;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Dodge, Meta = (AllowPrivateAccess = true))
+	float LongDodgeDelay;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = HitNum, Meta = (AllowPrivateAccess = true))
 	TArray<uint8> WeakAttackHitNum;
 
@@ -192,15 +197,21 @@ private:
 	UPROPERTY(Replicated)
 	float Speed;
 
+	UPROPERTY(Replicated)
+	bool IsCombatMode;
+
 	// Other Variable
-	FTimerHandle ComboTimer, DefenseTimer, BrokenTimer;
+	FTimerHandle ComboTimer, DefenseTimer, BrokenTimer, DodgeTimer;
 	uint8 CurrentCombo;
 	float BrokenPlayRate;
 	float NextDodgeTime;
 
 	// Flag Variable
-	bool IsCombatMode;
+		// Server
 	bool IsStrongMode;
 	bool IsStartCombat;
 	bool IsDefensing;
+
+		// Owner
+	bool IsReadyDodge;
 };

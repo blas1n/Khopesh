@@ -17,8 +17,9 @@ void UKhopeshAnimInstance::NativeBeginPlay()
 
 	MontageMap.Emplace(EMontage::ATTACK_WEAK, AttackWeak);
 	MontageMap.Emplace(EMontage::ATTACK_STRONG, AttackStrong);
-	MontageMap.Emplace(EMontage::DODGE, Dodge);
 	MontageMap.Emplace(EMontage::DEFENSE, Defense);
+	MontageMap.Emplace(EMontage::DODGE_SHORT, DodgeShort);
+	MontageMap.Emplace(EMontage::DODGE_LONG, DodgeLong);
 	MontageMap.Emplace(EMontage::HIT_FRONT, HitFront);
 	MontageMap.Emplace(EMontage::HIT_LEFT, HitLeft);
 	MontageMap.Emplace(EMontage::HIT_BACK, HitBack);

@@ -15,8 +15,9 @@ enum class EMontage : uint8
 {
 	ATTACK_WEAK,
 	ATTACK_STRONG,
-	DODGE,
 	DEFENSE,
+	DODGE_SHORT,
+	DODGE_LONG,
 	HIT_FRONT,
 	HIT_LEFT,
 	HIT_BACK,
@@ -80,10 +81,13 @@ private:
 	UAnimMontage* AttackStrong;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
-	UAnimMontage* Dodge;
+	UAnimMontage* Defense;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
-	UAnimMontage* Defense;
+	UAnimMontage* DodgeShort;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
+	UAnimMontage* DodgeLong;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation, Meta = (AllowPrivateAccess = true))
 	UAnimMontage* HitFront;

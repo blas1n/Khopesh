@@ -104,6 +104,7 @@ void AKhopeshCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 
 	DOREPLIFETIME(AKhopeshCharacter, HP);
 	DOREPLIFETIME(AKhopeshCharacter, Speed);
+	DOREPLIFETIME(AKhopeshCharacter, IsCombatMode);
 }
 
 void AKhopeshCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -118,7 +119,9 @@ void AKhopeshCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 	PlayerInputComponent->BindAction("Attack", IE_Pressed, this, &AKhopeshCharacter::Attack);
 	PlayerInputComponent->BindAction("Defense", IE_Pressed, this, &AKhopeshCharacter::Defense);
-	PlayerInputComponent->BindAction("Dodge", IE_Pressed, this, &AKhopeshCharacter::Dodge);
+
+	PlayerInputComponent->BindAction("Dodge", IE_Pressed, this, &AKhopeshCharacter::OnPressDodge);
+	PlayerInputComponent->BindAction("Dodge", IE_Released, this, &AKhopeshCharacter::OnReleaseDodge);
 }
 
 float AKhopeshCharacter::TakeDamage(
@@ -171,9 +174,32 @@ void AKhopeshCharacter::Defense()
 	Defense_Request(GetRotationByAim());
 }
 
-void AKhopeshCharacter::Dodge()
+void AKhopeshCharacter::OnPressDodge()
 {
-	Dodge_Request(GetRotationByInputKey());
+	if (IsCombatMode)
+	{
+		IsReadyDodge = true;
+
+		GetWorldTimerManager().SetTimer(DodgeTimer, [this]
+		{
+			Dodge_Request(GetRotationByInputKey(), true);
+			IsReadyDodge = false;
+		}, LongDodgeDelay, false);
+	}
+	else
+	{
+		Dodge_Request(GetRotationByInputKey(), true);
+	}
+}
+
+void AKhopeshCharacter::OnReleaseDodge()
+{
+	if (IsCombatMode && IsReadyDodge)
+	{
+		Dodge_Request(GetRotationByInputKey(), false);
+		GetWorldTimerManager().ClearTimer(DodgeTimer);
+		IsReadyDodge = false;
+	}
 }
 
 void AKhopeshCharacter::OnAttack()
@@ -268,24 +294,24 @@ void AKhopeshCharacter::Defense_Response_Implementation(FRotator NewRotation)
 	Anim->PlayMontage(EMontage::DEFENSE);
 }
 
-void AKhopeshCharacter::Dodge_Request_Implementation(FRotator NewRotation)
+void AKhopeshCharacter::Dodge_Request_Implementation(FRotator NewRotation, bool IsLongDodge)
 {
 	if (!IsStartCombat || !CanDodge() || Anim->IsMontagePlay() || GetCharacterMovement()->IsFalling())
 		return;
 
-	Dodge_Response(NewRotation);
+	Dodge_Response(NewRotation, IsLongDodge);
 	NextDodgeTime = GetWorld()->GetTimeSeconds() + DodgeDelay;
 }
 
-bool AKhopeshCharacter::Dodge_Request_Validate(FRotator NewRotation)
+bool AKhopeshCharacter::Dodge_Request_Validate(FRotator NewRotation, bool IsLongDodge)
 {
 	return true;
 }
 
-void AKhopeshCharacter::Dodge_Response_Implementation(FRotator NewRotation)
+void AKhopeshCharacter::Dodge_Response_Implementation(FRotator NewRotation, bool IsLongDodge)
 {
 	SetActorRotation(NewRotation);
-	Anim->PlayMontage(EMontage::DODGE);
+	Anim->PlayMontage(IsLongDodge ? EMontage::DODGE_LONG : EMontage::DODGE_SHORT);
 }
 
 void AKhopeshCharacter::AttackCameraShake_Implementation()
