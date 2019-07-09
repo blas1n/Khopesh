@@ -13,8 +13,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Controller.h"
-
-DECLARE_DELEGATE_OneParam(FSetMoveMode, int32)
+#include "Kismet/GameplayStatics.h"
 
 AKhopeshCharacter::AKhopeshCharacter()
 {
@@ -26,7 +25,6 @@ AKhopeshCharacter::AKhopeshCharacter()
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
-	GetCharacterMovement()->MaxWalkSpeed = IncreaseSpeed;
 	GetCharacterMovement()->JumpZVelocity = 600.f;
 	GetCharacterMovement()->AirControl = 0.2f;
 	
@@ -74,7 +72,7 @@ void AKhopeshCharacter::BeginPlay()
 		}, ComboDuration, false);
 	});
 
-	Speed = IncreaseSpeed;
+	GetCharacterMovement()->MaxWalkSpeed = Speed = ReadySpeed;
 }
 
 void AKhopeshCharacter::Tick(float DeltaSeconds)
@@ -121,9 +119,6 @@ void AKhopeshCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction("Attack", IE_Pressed, this, &AKhopeshCharacter::Attack);
 	PlayerInputComponent->BindAction("Defense", IE_Pressed, this, &AKhopeshCharacter::Defense);
 	PlayerInputComponent->BindAction("Step", IE_Pressed, this, &AKhopeshCharacter::Step);
-
-	PlayerInputComponent->BindAction<FSetMoveMode>("Dash", IE_Pressed, this, &AKhopeshCharacter::SetMoveMode, 1);
-	PlayerInputComponent->BindAction<FSetMoveMode>("Dash", IE_Released, this, &AKhopeshCharacter::SetMoveMode, -1);
 }
 
 float AKhopeshCharacter::TakeDamage(
@@ -137,7 +132,16 @@ float AKhopeshCharacter::TakeDamage(
 
 	float FinalDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	HP = FMath::Clamp<float>(HP - FinalDamage, 0.0f, 100.0f);
-	(HP > 0.0f) ? PlayHitMontage(DamageCauser->GetActorRotation().Yaw) : Die();
+
+	if (HP > 0.0f)
+	{
+		PlayHitMontage(DamageCauser->GetActorRotation().Yaw);
+
+		auto Dir = (GetActorLocation() - DamageCauser->GetActorLocation()).GetSafeNormal();
+		GetCharacterMovement()->Velocity = Dir * 1000.0f;
+	}
+	else { Die(); }
+
 	return FinalDamage;
 }
 
@@ -174,6 +178,8 @@ void AKhopeshCharacter::Step()
 
 void AKhopeshCharacter::OnAttack()
 {
+	AttackCameraShake();
+
 	FHitResult Out;
 
 	GetWorld()->SweepSingleByObjectType(
@@ -208,7 +214,7 @@ void AKhopeshCharacter::SetCombat(bool IsCombat)
 
 	if (!IsStartCombat && IsCombat)
 	{
-		Speed += IncreaseSpeed;
+		Speed = FightSpeed;
 		IsStartCombat = true;
 	}
 }
@@ -282,6 +288,12 @@ void AKhopeshCharacter::Step_Response_Implementation(FRotator NewRotation)
 	Anim->PlayMontage(EMontage::DODGE);
 }
 
+void AKhopeshCharacter::AttackCameraShake_Implementation()
+{
+	auto MyController = Cast<APlayerController>(GetController());
+	MyController->PlayerCameraManager->PlayCameraShake(*AttackCameraShakeClass);
+}
+
 void AKhopeshCharacter::PlayHitMontage_Implementation(float Direction)
 {
 	Anim->PlayMontage(GetHitMontageByDir(Direction > 180.0f ? Direction - 360.0f : Direction));
@@ -310,19 +322,6 @@ void AKhopeshCharacter::SetWeapon_Implementation(bool IsEquip)
 
 	LeftWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, LeftWeaponSocket);
 	RightWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, RightWeaponSocket);
-}
-
-void AKhopeshCharacter::SetMoveMode_Implementation(int32 MoveMode)
-{
-	if (IsStartCombat)
-	{
-		Speed += IncreaseSpeed * MoveMode;
-	}
-}
-
-bool AKhopeshCharacter::SetMoveMode_Validate(int32 MoveMode)
-{
-	return MoveMode == 1 || MoveMode == -1;
 }
 
 void AKhopeshCharacter::PlayDie_Implementation()

@@ -69,6 +69,9 @@ private:
 	UFUNCTION(NetMulticast, Reliable)
 	void Step_Response(FRotator NewRotation);
 
+	UFUNCTION(Client, Reliable)
+	void AttackCameraShake();
+
 	UFUNCTION(NetMulticast, Reliable)
 	void PlayHitMontage(float Direction);
 
@@ -84,12 +87,10 @@ private:
 	UFUNCTION(NetMulticast, Reliable)
 	void SetWeapon(bool IsEquip);
 
-	UFUNCTION(Server, Reliable, WithValidation)
-	void SetMoveMode(int32 MoveMode);
-
 	UFUNCTION(NetMulticast, Reliable)
 	void PlayDie();
 
+private:
 	// RPC Function Implementation
 	void Attack_Request_Implementation(FRotator NewRotation);
 	bool Attack_Request_Validate(FRotator NewRotation);
@@ -103,14 +104,13 @@ private:
 	bool Step_Request_Validate(FRotator NewRotation);
 	void Step_Response_Implementation(FRotator NewRotation);
 
+	void AttackCameraShake_Implementation();
+
 	void PlayHitMontage_Implementation(float Direction);
 	void EndDefenseMontage_Implementation(bool IsSuccess);
 	void PlayBroken_Implementation();
 	void PlayEquip_Implementation(bool IsEquip);
 	void SetWeapon_Implementation(bool IsEquip);
-
-	void SetMoveMode_Implementation(int32 MoveMode);
-	bool SetMoveMode_Validate(int32 MoveMode);
 
 	void PlayDie_Implementation();
 
@@ -170,10 +170,13 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
 	float StepDelay;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
-	float IncreaseSpeed;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Speed, Meta = (AllowPrivateAccess = true))
+	float ReadySpeed;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Speed, Meta = (AllowPrivateAccess = true))
+	float FightSpeed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Speed, Meta = (AllowPrivateAccess = true))
 	float SpeedRate;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = HitNum, Meta = (AllowPrivateAccess = true))
@@ -181,6 +184,9 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = HitNum, Meta = (AllowPrivateAccess = true))
 	TArray<uint8> StrongAttackHitNum;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CameraAnim, Meta = (AllowPrivateAccess = true))
+	TSubclassOf<class UCameraShake> AttackCameraShakeClass;
 
 	// Replicated Property (HP exclude here. Because it include Blueprint Property.)
 	UPROPERTY(Replicated)
