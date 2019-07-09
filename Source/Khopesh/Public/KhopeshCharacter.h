@@ -72,7 +72,7 @@ private:
 	void Dodge_Response(FRotator NewRotation, bool IsLongDodge);
 
 	UFUNCTION(Client, Reliable)
-	void AttackCameraShake();
+	void CameraShake(TSubclassOf<UCameraShake> CameraShake);
 
 	UFUNCTION(NetMulticast, Reliable)
 	void PlayHitMontage(float Direction);
@@ -106,7 +106,7 @@ private:
 	bool Dodge_Request_Validate(FRotator NewRotation, bool IsLongDodge);
 	void Dodge_Response_Implementation(FRotator NewRotation, bool IsLongDodge);
 
-	void AttackCameraShake_Implementation();
+	void CameraShake_Implementation(TSubclassOf<UCameraShake> CameraShake);
 
 	void PlayHitMontage_Implementation(float Direction);
 	void EndDefenseMontage_Implementation(bool IsSuccess);
@@ -191,7 +191,10 @@ private:
 	TArray<uint8> StrongAttackHitNum;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CameraAnim, Meta = (AllowPrivateAccess = true))
-	TSubclassOf<class UCameraShake> AttackCameraShakeClass;
+	TSubclassOf<class UCameraShake> AttackCameraShake;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CameraAnim, Meta = (AllowPrivateAccess = true))
+	TSubclassOf<class UCameraShake> HitCameraShake;
 
 	// Replicated Property (HP exclude here. Because it include Blueprint Property.)
 	UPROPERTY(Replicated)

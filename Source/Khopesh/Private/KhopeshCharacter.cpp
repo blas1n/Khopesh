@@ -139,6 +139,7 @@ float AKhopeshCharacter::TakeDamage(
 	if (HP > 0.0f)
 	{
 		PlayHitMontage(DamageCauser->GetActorRotation().Yaw);
+		CameraShake(HitCameraShake);
 
 		auto Dir = (GetActorLocation() - DamageCauser->GetActorLocation()).GetSafeNormal();
 		GetCharacterMovement()->Velocity = Dir * 1000.0f;
@@ -204,7 +205,7 @@ void AKhopeshCharacter::OnReleaseDodge()
 
 void AKhopeshCharacter::OnAttack()
 {
-	AttackCameraShake();
+	CameraShake(AttackCameraShake);
 
 	FHitResult Out;
 
@@ -314,10 +315,10 @@ void AKhopeshCharacter::Dodge_Response_Implementation(FRotator NewRotation, bool
 	Anim->PlayMontage(IsLongDodge ? EMontage::DODGE_LONG : EMontage::DODGE_SHORT);
 }
 
-void AKhopeshCharacter::AttackCameraShake_Implementation()
+void AKhopeshCharacter::CameraShake_Implementation(TSubclassOf<UCameraShake> CameraShake)
 {
 	auto MyController = Cast<APlayerController>(GetController());
-	MyController->PlayerCameraManager->PlayCameraShake(*AttackCameraShakeClass);
+	MyController->PlayerCameraManager->PlayCameraShake(*CameraShake);
 }
 
 void AKhopeshCharacter::PlayHitMontage_Implementation(float Direction)
