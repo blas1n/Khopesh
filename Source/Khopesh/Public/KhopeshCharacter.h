@@ -45,7 +45,7 @@ private:
 
 	void Attack();
 	void Defense();
-	void Step();
+	void Dodge();
 
 	void OnAttack();
 	void SetCombat(bool IsEquip);
@@ -64,10 +64,10 @@ private:
 	void Defense_Response(FRotator NewRotation);
 
 	UFUNCTION(Server, Reliable, WithValidation)
-	void Step_Request(FRotator NewRotation);
+	void Dodge_Request(FRotator NewRotation);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void Step_Response(FRotator NewRotation);
+	void Dodge_Response(FRotator NewRotation);
 
 	UFUNCTION(Client, Reliable)
 	void AttackCameraShake();
@@ -100,9 +100,9 @@ private:
 	bool Defense_Request_Validate(FRotator NewRotation);
 	void Defense_Response_Implementation(FRotator NewRotation);
 
-	void Step_Request_Implementation(FRotator NewRotation);
-	bool Step_Request_Validate(FRotator NewRotation);
-	void Step_Response_Implementation(FRotator NewRotation);
+	void Dodge_Request_Implementation(FRotator NewRotation);
+	bool Dodge_Request_Validate(FRotator NewRotation);
+	void Dodge_Response_Implementation(FRotator NewRotation);
 
 	void AttackCameraShake_Implementation();
 
@@ -120,7 +120,7 @@ private:
 	void Break(AKhopeshCharacter* Target);
 	void Die();
 
-	bool CanStep() const;
+	bool CanDodge() const;
 	bool IsEnemyNear() const;
 	FRotator GetRotationByAim() const;
 	FRotator GetRotationByInputKey() const;
@@ -168,7 +168,7 @@ private:
 	float BrokenDuration;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stat, Meta = (AllowPrivateAccess = true))
-	float StepDelay;
+	float DodgeDelay;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Speed, Meta = (AllowPrivateAccess = true))
 	float ReadySpeed;
@@ -196,7 +196,7 @@ private:
 	FTimerHandle ComboTimer, DefenseTimer, BrokenTimer;
 	uint8 CurrentCombo;
 	float BrokenPlayRate;
-	float NextStepTime;
+	float NextDodgeTime;
 
 	// Flag Variable
 	bool IsCombatMode;

@@ -118,7 +118,7 @@ void AKhopeshCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 	PlayerInputComponent->BindAction("Attack", IE_Pressed, this, &AKhopeshCharacter::Attack);
 	PlayerInputComponent->BindAction("Defense", IE_Pressed, this, &AKhopeshCharacter::Defense);
-	PlayerInputComponent->BindAction("Step", IE_Pressed, this, &AKhopeshCharacter::Step);
+	PlayerInputComponent->BindAction("Dodge", IE_Pressed, this, &AKhopeshCharacter::Dodge);
 }
 
 float AKhopeshCharacter::TakeDamage(
@@ -171,9 +171,9 @@ void AKhopeshCharacter::Defense()
 	Defense_Request(GetRotationByAim());
 }
 
-void AKhopeshCharacter::Step()
+void AKhopeshCharacter::Dodge()
 {
-	Step_Request(GetRotationByInputKey());
+	Dodge_Request(GetRotationByInputKey());
 }
 
 void AKhopeshCharacter::OnAttack()
@@ -268,21 +268,21 @@ void AKhopeshCharacter::Defense_Response_Implementation(FRotator NewRotation)
 	Anim->PlayMontage(EMontage::DEFENSE);
 }
 
-void AKhopeshCharacter::Step_Request_Implementation(FRotator NewRotation)
+void AKhopeshCharacter::Dodge_Request_Implementation(FRotator NewRotation)
 {
-	if (!IsStartCombat || !CanStep() || Anim->IsMontagePlay() || GetCharacterMovement()->IsFalling())
+	if (!IsStartCombat || !CanDodge() || Anim->IsMontagePlay() || GetCharacterMovement()->IsFalling())
 		return;
 
-	Step_Response(NewRotation);
-	NextStepTime = GetWorld()->GetTimeSeconds() + StepDelay;
+	Dodge_Response(NewRotation);
+	NextDodgeTime = GetWorld()->GetTimeSeconds() + DodgeDelay;
 }
 
-bool AKhopeshCharacter::Step_Request_Validate(FRotator NewRotation)
+bool AKhopeshCharacter::Dodge_Request_Validate(FRotator NewRotation)
 {
 	return true;
 }
 
-void AKhopeshCharacter::Step_Response_Implementation(FRotator NewRotation)
+void AKhopeshCharacter::Dodge_Response_Implementation(FRotator NewRotation)
 {
 	SetActorRotation(NewRotation);
 	Anim->PlayMontage(EMontage::DODGE);
@@ -364,9 +364,9 @@ void AKhopeshCharacter::Die()
 	PlayDie();
 }
 
-bool AKhopeshCharacter::CanStep() const
+bool AKhopeshCharacter::CanDodge() const
 {
-	return (FMath::IsNearlyEqual(NextStepTime, 0.0f) || NextStepTime <= GetWorld()->GetTimeSeconds());
+	return (FMath::IsNearlyEqual(NextDodgeTime, 0.0f) || NextDodgeTime <= GetWorld()->GetTimeSeconds());
 }
 
 bool AKhopeshCharacter::IsEnemyNear() const
