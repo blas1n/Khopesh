@@ -75,7 +75,7 @@ private:
 	void CameraShake(TSubclassOf<UCameraShake> CameraShake);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void PlayHitMontage(float Direction);
+	void PlayHitMontage(EMontage Montage);
 
 	UFUNCTION(NetMulticast, Reliable)
 	void EndDefenseMontage(bool IsSuccess);
@@ -108,7 +108,7 @@ private:
 
 	void CameraShake_Implementation(TSubclassOf<UCameraShake> CameraShake);
 
-	void PlayHitMontage_Implementation(float Direction);
+	void PlayHitMontage_Implementation(EMontage Montage);
 	void EndDefenseMontage_Implementation(bool IsSuccess);
 	void PlayBroken_Implementation();
 	void PlayEquip_Implementation(bool IsEquip);

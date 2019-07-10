@@ -138,11 +138,10 @@ float AKhopeshCharacter::TakeDamage(
 
 	if (HP > 0.0f)
 	{
-		PlayHitMontage(DamageCauser->GetActorRotation().Yaw);
+		auto Dir = GetActorRotation().Yaw - DamageCauser->GetActorRotation().Yaw;
+		Dir = (FMath::Abs(Dir) > 180.0f) ? (Dir - (360.0f * FMath::Sign(Dir))) : Dir;
+		PlayHitMontage(GetHitMontageByDir(Dir));
 		CameraShake(HitCameraShake);
-
-		auto Dir = (GetActorLocation() - DamageCauser->GetActorLocation()).GetSafeNormal();
-		GetCharacterMovement()->Velocity = Dir * 1000.0f;
 	}
 	else { Die(); }
 
@@ -321,9 +320,9 @@ void AKhopeshCharacter::CameraShake_Implementation(TSubclassOf<UCameraShake> Cam
 	MyController->PlayerCameraManager->PlayCameraShake(*CameraShake);
 }
 
-void AKhopeshCharacter::PlayHitMontage_Implementation(float Direction)
+void AKhopeshCharacter::PlayHitMontage_Implementation(EMontage Montage)
 {
-	Anim->PlayMontage(GetHitMontageByDir(Direction > 180.0f ? Direction - 360.0f : Direction));
+	Anim->PlayMontage(Montage);
 }
 
 void AKhopeshCharacter::EndDefenseMontage_Implementation(bool IsSuccess)
@@ -434,15 +433,16 @@ FRotator AKhopeshCharacter::GetRotationByInputKey() const
 
 EMontage AKhopeshCharacter::GetHitMontageByDir(float Dir) const
 {
-	EMontage Montage = (Dir > 0.0f ? EMontage::HIT_RIGHT : EMontage::HIT_LEFT);
+	UE_LOG(LogTemp, Warning, TEXT("After : %f"), Dir);
+	EMontage Montage = (Dir > 0.0f) ? EMontage::HIT_LEFT : EMontage::HIT_RIGHT;
 
 	if (FMath::Abs(Dir) <= 45.0f)
 	{
-		Montage = EMontage::HIT_FRONT;
+		Montage = EMontage::HIT_BACK;
 	}
 	else if (FMath::Abs(Dir) >= 135.0f)
 	{
-		Montage = EMontage::HIT_BACK;
+		Montage = EMontage::HIT_FRONT;
 	}
 
 	return Montage;
