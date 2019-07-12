@@ -9,8 +9,6 @@
 void AKhopeshPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-
-	SetGameInputMode();
 }
 
 void AKhopeshPlayerController::PlayerDead()
