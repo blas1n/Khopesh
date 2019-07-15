@@ -72,6 +72,9 @@ private:
 	void Dodge_Response(FRotator NewRotation, bool IsLongDodge);
 
 	UFUNCTION(Client, Reliable)
+	void StartCombat();
+
+	UFUNCTION(Client, Reliable)
 	void CameraShake(TSubclassOf<UCameraShake> CameraShake);
 
 	UFUNCTION(NetMulticast, Reliable)
@@ -106,6 +109,8 @@ private:
 	bool Dodge_Request_Validate(FRotator NewRotation, bool IsLongDodge);
 	void Dodge_Response_Implementation(FRotator NewRotation, bool IsLongDodge);
 
+	void StartCombat_Implementation();
+
 	void CameraShake_Implementation(TSubclassOf<UCameraShake> CameraShake);
 
 	void PlayHitMontage_Implementation(EMontage Montage);
@@ -115,6 +120,11 @@ private:
 	void SetWeapon_Implementation(bool IsEquip);
 
 	void PlayDie_Implementation();
+
+protected:
+	// Blueprint Function
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnStartCombat();
 
 private:
 	// Other Function
@@ -195,6 +205,9 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CameraAnim, Meta = (AllowPrivateAccess = true))
 	TSubclassOf<class UCameraShake> HitCameraShake;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Sound, Meta = (AllowPrivateAccess = true))
+	class USoundBase* CombatBackSound;
 
 	// Replicated Property (HP exclude here. Because it include Blueprint Property.)
 	UPROPERTY(Replicated)

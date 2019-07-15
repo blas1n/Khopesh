@@ -242,6 +242,7 @@ void AKhopeshCharacter::SetCombat(bool IsCombat)
 	{
 		Speed = FightSpeed;
 		IsStartCombat = true;
+		StartCombat();
 	}
 }
 
@@ -312,6 +313,10 @@ void AKhopeshCharacter::Dodge_Response_Implementation(FRotator NewRotation, bool
 {
 	SetActorRotation(NewRotation);
 	Anim->PlayMontage(IsLongDodge ? EMontage::DODGE_LONG : EMontage::DODGE_SHORT);
+}
+
+void AKhopeshCharacter::StartCombat_Implementation() {
+	OnStartCombat();
 }
 
 void AKhopeshCharacter::CameraShake_Implementation(TSubclassOf<UCameraShake> CameraShake)
