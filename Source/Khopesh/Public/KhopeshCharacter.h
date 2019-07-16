@@ -213,6 +213,9 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Dodge, Meta = (AllowPrivateAccess = true))
 	float DodgeReinforceDelay;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = KnockBack, Meta = (AllowPrivateAccess = true))
+	float HitKnockBackImpulse;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = HitNum, Meta = (AllowPrivateAccess = true))
 	TArray<uint8> WeakAttackHitNum;
 

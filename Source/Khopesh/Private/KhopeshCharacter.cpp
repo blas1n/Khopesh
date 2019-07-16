@@ -144,6 +144,7 @@ float AKhopeshCharacter::TakeDamage(
 	{
 		auto Dir = GetActorRotation().Yaw - DamageCauser->GetActorRotation().Yaw;
 		Dir = (FMath::Abs(Dir) > 180.0f) ? (Dir - (360.0f * FMath::Sign(Dir))) : Dir;
+		GetCharacterMovement()->AddImpulse(DamageCauser->GetActorForwardVector() * HitKnockBackImpulse, true);
 		PlayHitMontage(GetHitMontageByDir(Dir));
 	}
 	else { Die(); }
