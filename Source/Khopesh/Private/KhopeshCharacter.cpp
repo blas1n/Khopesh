@@ -13,6 +13,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Controller.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Kismet/GameplayStatics.h"
 
 AKhopeshCharacter::AKhopeshCharacter()
@@ -127,7 +128,7 @@ void AKhopeshCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 float AKhopeshCharacter::TakeDamage(
 	float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	if (IsDefensing)
+	if (IsDefensing && FMath::Abs(GetActorRotation().Yaw - DamageCauser->GetActorRotation().Yaw) >= 112.5f)
 	{
 		Break(Cast<AKhopeshCharacter>(DamageCauser));
 		return 0.0f;
@@ -206,7 +207,6 @@ void AKhopeshCharacter::OnReleaseDodge()
 void AKhopeshCharacter::OnAttack()
 {
 	ShowAttackEffect();
-
 	FHitResult Out;
 
 	GetWorld()->SweepSingleByObjectType(
@@ -331,6 +331,11 @@ void AKhopeshCharacter::ShowHitEffect_Implementation()
 	OnShowHitEffect();
 }
 
+void AKhopeshCharacter::ShowParryingEffect_Implementation()
+{
+	OnShowParryingEffect();
+}
+
 void AKhopeshCharacter::ApplyEnemyHP_Implementation(float HP)
 {
 	OnApplyEnemyHP(HP);
@@ -341,9 +346,14 @@ void AKhopeshCharacter::PlayHitMontage_Implementation(EMontage Montage)
 	Anim->PlayMontage(Montage);
 }
 
-void AKhopeshCharacter::EndDefenseMontage_Implementation(bool IsSuccess)
+void AKhopeshCharacter::EndDefenseMontage_Implementation(bool IsSuccess, FRotator Rotator)
 {
 	Anim->JumpToSection(EMontage::DEFENSE, IsSuccess ? TEXT("Success") : TEXT("Fail"));
+
+	if (IsSuccess)
+	{
+		SetActorRotation(Rotator);
+	}
 }
 
 void AKhopeshCharacter::PlayBroken_Implementation()
@@ -388,7 +398,9 @@ void AKhopeshCharacter::Move(EAxis::Type Axis, float Value)
 void AKhopeshCharacter::Break(AKhopeshCharacter* Target)
 {
 	GetWorldTimerManager().ClearTimer(DefenseTimer);
-	EndDefenseMontage(true);
+	auto Rotator = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), Target->GetActorLocation());
+	EndDefenseMontage(true, Rotator);
+	ShowParryingEffect();
 	Target->PlayBroken();
 	IsDefensing = false;
 	IsStrongMode = true;

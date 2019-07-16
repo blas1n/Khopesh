@@ -81,13 +81,16 @@ private:
 	void ShowHitEffect();
 
 	UFUNCTION(Client, Reliable)
+	void ShowParryingEffect();
+
+	UFUNCTION(Client, Reliable)
 	void ApplyEnemyHP(float HP);
 
 	UFUNCTION(NetMulticast, Reliable)
 	void PlayHitMontage(EMontage Montage);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void EndDefenseMontage(bool IsSuccess);
+	void EndDefenseMontage(bool IsSuccess, FRotator Rotator = FRotator());
 
 	UFUNCTION(NetMulticast, Reliable)
 	void PlayBroken();
@@ -118,11 +121,12 @@ private:
 	void ShowCombatEffect_Implementation();
 	void ShowAttackEffect_Implementation();
 	void ShowHitEffect_Implementation();
+	void ShowParryingEffect_Implementation();
 
 	void ApplyEnemyHP_Implementation(float HP);
 
 	void PlayHitMontage_Implementation(EMontage Montage);
-	void EndDefenseMontage_Implementation(bool IsSuccess);
+	void EndDefenseMontage_Implementation(bool IsSuccess, FRotator Rotator);
 	void PlayBroken_Implementation();
 	void PlayEquip_Implementation(bool IsEquip);
 	void SetWeapon_Implementation(bool IsEquip);
@@ -139,6 +143,9 @@ protected:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnShowHitEffect();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnShowParryingEffect();
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnApplyEnemyHP(float HP);
