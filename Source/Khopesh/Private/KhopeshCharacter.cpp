@@ -137,6 +137,7 @@ float AKhopeshCharacter::TakeDamage(
 	float FinalDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	HP = FMath::Clamp<float>(HP - FinalDamage, 0.0f, 100.0f);
 	Cast<AKhopeshCharacter>(DamageCauser)->ApplyEnemyHP(HP);
+	ShowHitEffect();
 	PlayHitSound();
 
 	if (HP > 0.0f)
@@ -144,7 +145,6 @@ float AKhopeshCharacter::TakeDamage(
 		auto Dir = GetActorRotation().Yaw - DamageCauser->GetActorRotation().Yaw;
 		Dir = (FMath::Abs(Dir) > 180.0f) ? (Dir - (360.0f * FMath::Sign(Dir))) : Dir;
 		PlayHitMontage(GetHitMontageByDir(Dir));
-		ShowHitEffect();
 	}
 	else { Die(); }
 
