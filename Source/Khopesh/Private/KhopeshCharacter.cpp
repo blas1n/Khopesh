@@ -63,8 +63,8 @@ void AKhopeshCharacter::BeginPlay()
 
 	if (!HasAuthority()) return;
 
-	Anim->OnSetCombatMode.BindUObject(this, &AKhopeshCharacter::SetCombat);
 	Anim->OnAttack.BindUObject(this, &AKhopeshCharacter::OnAttack);
+	Anim->OnSetCombatMode.BindUObject(this, &AKhopeshCharacter::SetCombat);
 	Anim->OnNextCombo.BindLambda([this]()
 	{
 		GetWorldTimerManager().SetTimer(ComboTimer, [this]()
@@ -187,7 +187,7 @@ void AKhopeshCharacter::OnPressDodge()
 		{
 			Dodge_Request(GetRotationByInputKey(), true);
 			IsReadyDodge = false;
-		}, LongDodgeDelay, false);
+		}, DodgeReinforceDelay, false);
 	}
 	else
 	{
@@ -207,7 +207,6 @@ void AKhopeshCharacter::OnReleaseDodge()
 
 void AKhopeshCharacter::OnAttack()
 {
-	ShowAttackEffect();
 	FHitResult Out;
 
 	GetWorld()->SweepSingleByObjectType(
@@ -320,11 +319,6 @@ void AKhopeshCharacter::Dodge_Response_Implementation(FRotator NewRotation, bool
 void AKhopeshCharacter::ShowCombatEffect_Implementation()
 {
 	OnShowCombatEffect();
-}
-
-void AKhopeshCharacter::ShowAttackEffect_Implementation()
-{
-	OnShowAttackEffect();
 }
 
 void AKhopeshCharacter::ShowHitEffect_Implementation()

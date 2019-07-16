@@ -75,9 +75,6 @@ private:
 	void ShowCombatEffect();
 
 	UFUNCTION(Client, Reliable)
-	void ShowAttackEffect();
-
-	UFUNCTION(Client, Reliable)
 	void ShowHitEffect();
 
 	UFUNCTION(Client, Reliable)
@@ -122,7 +119,6 @@ private:
 	void Dodge_Response_Implementation(FRotator NewRotation, bool IsLongDodge);
 
 	void ShowCombatEffect_Implementation();
-	void ShowAttackEffect_Implementation();
 	void ShowHitEffect_Implementation();
 	void ShowParryingEffect_Implementation();
 
@@ -141,9 +137,6 @@ protected:
 	// Blueprint Function
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnShowCombatEffect();
-
-	UFUNCTION(BlueprintImplementableEvent)
-	void OnShowAttackEffect();
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnShowHitEffect();
@@ -218,7 +211,7 @@ private:
 	float SpeedRate;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Dodge, Meta = (AllowPrivateAccess = true))
-	float LongDodgeDelay;
+	float DodgeReinforceDelay;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = HitNum, Meta = (AllowPrivateAccess = true))
 	TArray<uint8> WeakAttackHitNum;
