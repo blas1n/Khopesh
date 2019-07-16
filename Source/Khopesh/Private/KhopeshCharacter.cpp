@@ -137,6 +137,7 @@ float AKhopeshCharacter::TakeDamage(
 	float FinalDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	HP = FMath::Clamp<float>(HP - FinalDamage, 0.0f, 100.0f);
 	Cast<AKhopeshCharacter>(DamageCauser)->ApplyEnemyHP(HP);
+	PlayHitSound();
 
 	if (HP > 0.0f)
 	{
@@ -339,6 +340,11 @@ void AKhopeshCharacter::ShowParryingEffect_Implementation()
 void AKhopeshCharacter::ApplyEnemyHP_Implementation(float HP)
 {
 	OnApplyEnemyHP(HP);
+}
+
+void AKhopeshCharacter::PlayHitSound_Implementation()
+{
+	OnPlayHitSound();
 }
 
 void AKhopeshCharacter::PlayHitMontage_Implementation(EMontage Montage)

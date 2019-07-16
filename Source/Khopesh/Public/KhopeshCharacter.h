@@ -87,6 +87,9 @@ private:
 	void ApplyEnemyHP(float HP);
 
 	UFUNCTION(NetMulticast, Reliable)
+	void PlayHitSound();
+
+	UFUNCTION(NetMulticast, Reliable)
 	void PlayHitMontage(EMontage Montage);
 
 	UFUNCTION(NetMulticast, Reliable)
@@ -123,6 +126,7 @@ private:
 	void ShowHitEffect_Implementation();
 	void ShowParryingEffect_Implementation();
 
+	void PlayHitSound_Implementation();
 	void ApplyEnemyHP_Implementation(float HP);
 
 	void PlayHitMontage_Implementation(EMontage Montage);
@@ -149,6 +153,9 @@ protected:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnApplyEnemyHP(float HP);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnPlayHitSound();
 
 private:
 	// Other Function
