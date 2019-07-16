@@ -72,10 +72,16 @@ private:
 	void Dodge_Response(FRotator NewRotation, bool IsLongDodge);
 
 	UFUNCTION(Client, Reliable)
-	void StartCombat();
+	void ShowCombatEffect();
 
 	UFUNCTION(Client, Reliable)
-	void CameraShake(TSubclassOf<UCameraShake> CameraShake);
+	void ShowAttackEffect();
+
+	UFUNCTION(Client, Reliable)
+	void ShowHitEffect();
+
+	UFUNCTION(Client, Reliable)
+	void ApplyEnemyHP(float HP);
 
 	UFUNCTION(NetMulticast, Reliable)
 	void PlayHitMontage(EMontage Montage);
@@ -109,9 +115,11 @@ private:
 	bool Dodge_Request_Validate(FRotator NewRotation, bool IsLongDodge);
 	void Dodge_Response_Implementation(FRotator NewRotation, bool IsLongDodge);
 
-	void StartCombat_Implementation();
+	void ShowCombatEffect_Implementation();
+	void ShowAttackEffect_Implementation();
+	void ShowHitEffect_Implementation();
 
-	void CameraShake_Implementation(TSubclassOf<UCameraShake> CameraShake);
+	void ApplyEnemyHP_Implementation(float HP);
 
 	void PlayHitMontage_Implementation(EMontage Montage);
 	void EndDefenseMontage_Implementation(bool IsSuccess);
@@ -124,7 +132,16 @@ private:
 protected:
 	// Blueprint Function
 	UFUNCTION(BlueprintImplementableEvent)
-	void OnStartCombat();
+	void OnShowCombatEffect();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnShowAttackEffect();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnShowHitEffect();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnApplyEnemyHP(float HP);
 
 private:
 	// Other Function
@@ -137,11 +154,6 @@ private:
 	FRotator GetRotationByAim() const;
 	FRotator GetRotationByInputKey() const;
 	EMontage GetHitMontageByDir(float Dir) const;
-
-public:
-	// Getters
-	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
-	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
 private:
 	// Animation Instance
@@ -199,15 +211,6 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = HitNum, Meta = (AllowPrivateAccess = true))
 	TArray<uint8> StrongAttackHitNum;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CameraAnim, Meta = (AllowPrivateAccess = true))
-	TSubclassOf<class UCameraShake> AttackCameraShake;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CameraAnim, Meta = (AllowPrivateAccess = true))
-	TSubclassOf<class UCameraShake> HitCameraShake;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Sound, Meta = (AllowPrivateAccess = true))
-	class USoundBase* CombatBackSound;
 
 	// Replicated Property (HP exclude here. Because it include Blueprint Property.)
 	UPROPERTY(Replicated)

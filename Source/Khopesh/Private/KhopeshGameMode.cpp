@@ -47,8 +47,8 @@ void AKhopeshGameMode::PlayerDead(AKhopeshPlayerController* DeadPlayer)
 	AKhopeshPlayerController* WinPlayer = Players[!Players.Find(DeadPlayer)];
 	AKhopeshPlayerController* LosePlayer = DeadPlayer;
 
-	WinPlayer->SetUIInputMode();
-	LosePlayer->SetUIInputMode();
+	WinPlayer->BlockInput();
+	LosePlayer->BlockInput();
 
 	FTimerHandle Timer;
 	GetWorldTimerManager().SetTimer(Timer, [this, WinPlayer, LosePlayer]()

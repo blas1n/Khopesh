@@ -27,14 +27,11 @@ void AKhopeshPlayerController::ShowResultWidget_Implementation(bool IsWin)
 	OnShowResultWidget(IsWin);
 }
 
-void AKhopeshPlayerController::SetGameInputMode_Implementation()
+void AKhopeshPlayerController::BlockInput_Implementation()
 {
-	SetInputMode(FInputModeGameOnly());
-	bShowMouseCursor = false;
-}
-
-void AKhopeshPlayerController::SetUIInputMode_Implementation()
-{
+	StopMovement();
+	SetIgnoreMoveInput(true);
+	SetIgnoreLookInput(true);
 	SetInputMode(FInputModeUIOnly());
 	bShowMouseCursor = true;
 }

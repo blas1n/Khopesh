@@ -19,10 +19,7 @@ public:
 	void ShowResultWidget(bool IsWin);
 
 	UFUNCTION(Client, Reliable)
-	void SetGameInputMode();
-
-	UFUNCTION(Client, Reliable)
-	void SetUIInputMode();
+	void BlockInput();
 
 	UFUNCTION(BlueprintCallable)
 	void BackToLobby();
@@ -31,8 +28,7 @@ public:
 
 private:
 	void ShowResultWidget_Implementation(bool IsWin);
-	void SetGameInputMode_Implementation();
-	void SetUIInputMode_Implementation();
+	void BlockInput_Implementation();
 
 protected:
 	UFUNCTION(BlueprintImplementableEvent)

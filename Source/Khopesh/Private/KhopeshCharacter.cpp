@@ -135,13 +135,14 @@ float AKhopeshCharacter::TakeDamage(
 
 	float FinalDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	HP = FMath::Clamp<float>(HP - FinalDamage, 0.0f, 100.0f);
+	Cast<AKhopeshCharacter>(DamageCauser)->ApplyEnemyHP(HP);
 
 	if (HP > 0.0f)
 	{
 		auto Dir = GetActorRotation().Yaw - DamageCauser->GetActorRotation().Yaw;
 		Dir = (FMath::Abs(Dir) > 180.0f) ? (Dir - (360.0f * FMath::Sign(Dir))) : Dir;
 		PlayHitMontage(GetHitMontageByDir(Dir));
-		CameraShake(HitCameraShake);
+		ShowHitEffect();
 	}
 	else { Die(); }
 
@@ -204,7 +205,7 @@ void AKhopeshCharacter::OnReleaseDodge()
 
 void AKhopeshCharacter::OnAttack()
 {
-	CameraShake(AttackCameraShake);
+	ShowAttackEffect();
 
 	FHitResult Out;
 
@@ -242,7 +243,7 @@ void AKhopeshCharacter::SetCombat(bool IsCombat)
 	{
 		Speed = FightSpeed;
 		IsStartCombat = true;
-		StartCombat();
+		ShowCombatEffect();
 	}
 }
 
@@ -315,14 +316,24 @@ void AKhopeshCharacter::Dodge_Response_Implementation(FRotator NewRotation, bool
 	Anim->PlayMontage(IsLongDodge ? EMontage::DODGE_LONG : EMontage::DODGE_SHORT);
 }
 
-void AKhopeshCharacter::StartCombat_Implementation() {
-	OnStartCombat();
+void AKhopeshCharacter::ShowCombatEffect_Implementation()
+{
+	OnShowCombatEffect();
 }
 
-void AKhopeshCharacter::CameraShake_Implementation(TSubclassOf<UCameraShake> CameraShake)
+void AKhopeshCharacter::ShowAttackEffect_Implementation()
 {
-	auto MyController = Cast<APlayerController>(GetController());
-	MyController->PlayerCameraManager->PlayCameraShake(*CameraShake);
+	OnShowAttackEffect();
+}
+
+void AKhopeshCharacter::ShowHitEffect_Implementation()
+{
+	OnShowHitEffect();
+}
+
+void AKhopeshCharacter::ApplyEnemyHP_Implementation(float HP)
+{
+	OnApplyEnemyHP(HP);
 }
 
 void AKhopeshCharacter::PlayHitMontage_Implementation(EMontage Montage)
